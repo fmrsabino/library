@@ -23,9 +23,9 @@ public class SecurityModule {
             new DataOutputStream(out).writeInt(threatLevel);
 
             System.out.println("Sending threat level of: " + threatLevel);
-
+            byte[] reply = serviceProxy.invokeUnordered(out.toByteArray());
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
 
     }
