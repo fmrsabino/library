@@ -1,29 +1,26 @@
 package bftsmart.demo.adapt;
 
 
-import bftsmart.reconfiguration.VMServices;
 import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
-import bftsmart.tom.util.Logger;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.FileReader;
-import java.rmi.server.ExportException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class AdaptServer extends DefaultRecoverable {
-
+    public final static String ADAPT_CONFIG_HOME = "adapt-config";
     private ServiceReplica replica;
     private List<ReplicaStatus> activeReplicas = new ArrayList<>();
     private List<ReplicaStatus> inactiveReplicas = new ArrayList<>();
 
     public AdaptServer(int id) {
-        replica = new ServiceReplica(id, this, this);
-        readStatusFile("config/hosts.status");
+        replica = new ServiceReplica(id, ADAPT_CONFIG_HOME, this, this, null);
+        readStatusFile(ADAPT_CONFIG_HOME + "/hosts.status");
     }
 
     @Override

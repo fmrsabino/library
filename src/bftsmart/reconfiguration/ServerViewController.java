@@ -69,7 +69,6 @@ public class ServerViewController extends ViewController {
     }
 
     private InetSocketAddress[] getInitAdddresses() {
-
         int nextV[] = getStaticConf().getInitialView();
         InetSocketAddress[] addresses = new InetSocketAddress[nextV.length];
         for (int i = 0; i < nextV.length; i++) {
