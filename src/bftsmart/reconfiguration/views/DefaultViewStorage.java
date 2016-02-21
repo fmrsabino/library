@@ -29,11 +29,14 @@ import java.io.ObjectOutputStream;
  */
 public class DefaultViewStorage implements ViewStorage {
 
+    private final static String DEFAULT_CONFIG_HOME = "config";
     private String path = "";
 
-    public DefaultViewStorage() {
+    public DefaultViewStorage(String configFolder) {
         String sep = System.getProperty("file.separator");
-        path = System.getProperty("user.dir") + sep + "config";
+        String folder = configFolder == null || "".equals(configFolder) ? DEFAULT_CONFIG_HOME : configFolder;
+        path = System.getProperty("user.dir") + sep + folder;
+        System.out.println("Path = " + path);
         File f = new File(path);
         if (!f.exists()) {
             f.mkdirs();
