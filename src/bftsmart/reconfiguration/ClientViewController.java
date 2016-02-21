@@ -38,10 +38,10 @@ public class ClientViewController extends ViewController {
     public ClientViewController(int procId, String configHome) {
         super(procId, configHome);
         View cv = getViewStore().readView();
-        if(cv == null){
+        if (cv == null) {
             reconfigureTo(new View(0, getStaticConf().getInitialView(), 
                 getStaticConf().getF(), getInitAdddresses()));
-        }else{
+        } else {
             reconfigureTo(cv);
         }
     }

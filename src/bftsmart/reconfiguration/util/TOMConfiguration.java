@@ -344,6 +344,10 @@ public class TOMConfiguration extends Configuration {
         return (this.getTTPId() == this.getProcessId());
     }
 
+    public String getConfigHome() {
+        return configHome;
+    }
+
     public final int[] getInitialView() {
         return this.initialView;
     }

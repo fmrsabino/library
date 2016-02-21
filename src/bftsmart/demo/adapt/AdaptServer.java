@@ -38,8 +38,8 @@ public class AdaptServer extends DefaultRecoverable {
 
     @Override
     public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
-        System.out.println("RECEIVED!");
-        try {
+        System.out.println("[AdaptServer] RECEIVED!");
+       /* try {
             int threatLevel = new DataInputStream(new ByteArrayInputStream(command)).readInt();
             if (threatLevel == 1) { //add replica
                 ReplicaStatus status = inactiveReplicas.remove(0);
@@ -57,7 +57,7 @@ public class AdaptServer extends DefaultRecoverable {
             System.out.println("Threat Level = " + threatLevel);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
         return new byte[0];
     }
 
