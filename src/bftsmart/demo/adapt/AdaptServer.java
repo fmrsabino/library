@@ -5,10 +5,7 @@ import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.FileReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,25 +36,24 @@ public class AdaptServer extends DefaultRecoverable {
     @Override
     public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
         System.out.println("[AdaptServer] RECEIVED!");
-       /* try {
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream(4);
             int threatLevel = new DataInputStream(new ByteArrayInputStream(command)).readInt();
             if (threatLevel == 1) { //add replica
                 ReplicaStatus status = inactiveReplicas.remove(0);
                 status.setActive(true);
                 activeReplicas.add(status);
-                String[] args = new String[] {"./runscripts/smartrun.sh bftsmart.reconfiguration.VMServices",
-                    ""+status.getSmartId()+" "+status.getIp()+" "+status.getPort()+"\n"};
-                //VMServices.main(new String[]{status.getSmartId(), status.getIp(), status.getPort()});
+                new DataOutputStream(out).writeUTF(status.getSmartId() + " " + status.getIp() + " " + status.getPort());
             } else { //remove replica
-                ReplicaStatus status = activeReplicas.remove(0);
+                ReplicaStatus status = activeReplicas.remove(activeReplicas.size()-1);
                 status.setActive(false);
-                inactiveReplicas.add(status);
-                //VMServices.main(new String[]{status.getSmartId()});
+                inactiveReplicas.add(0, status);
+                new DataOutputStream(out).writeUTF(status.getSmartId());
             }
-            System.out.println("Threat Level = " + threatLevel);
+            return out.toByteArray();
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
+        }
         return new byte[0];
     }
 
@@ -121,12 +117,7 @@ public class AdaptServer extends DefaultRecoverable {
 
         @Override
         public String toString() {
-            return "ReplicaStatus{" +
-                    "smartId='" + smartId + '\'' +
-                    ", ip='" + ip + '\'' +
-                    ", port='" + port + '\'' +
-                    ", active=" + active +
-                    '}';
+            return smartId + " " + ip + " " + port;
         }
     }
 }
