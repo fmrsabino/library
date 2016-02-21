@@ -6,6 +6,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 
 public class SecurityModule {
+
+    private static int processId;
+    private static int threatLevel;
+
     public static void main(String[] args) {
         if (args.length < 1) {
             System.out.println("Usage: java ...SecurityModule <process id> <threatlevel>");
@@ -14,10 +18,15 @@ public class SecurityModule {
             System.exit(-1);
         }
 
-        int processId = Integer.parseInt(args[0]);
-        int threatLevel = Integer.parseInt(args[1]);
+        processId = Integer.parseInt(args[0]);
+        threatLevel = Integer.parseInt(args[1]);
 
-        ServiceProxy serviceProxy = new ServiceProxy(processId);
+        sendThreatLevel("adapt-config");
+        sendThreatLevel("");
+    }
+
+    private static void sendThreatLevel(String configHome) {
+        ServiceProxy serviceProxy = new ServiceProxy(processId, configHome);
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream(4);
             new DataOutputStream(out).writeInt(threatLevel);
@@ -27,6 +36,5 @@ public class SecurityModule {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 }
