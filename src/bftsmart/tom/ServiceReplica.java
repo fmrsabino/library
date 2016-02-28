@@ -187,7 +187,6 @@ public class ServiceReplica {
                 this.cs.updateServersConnections();
                 this.cs.joinViewReceived();
             } else {
-                
                 //Not in the initial view, just waiting for the view where the join has been executed
                 System.out.println("Waiting for the TTP: " + this.SVController.getCurrentView());
                 waitTTPJoinMsgLock.lock();
@@ -197,7 +196,6 @@ public class ServiceReplica {
                     waitTTPJoinMsgLock.unlock();
                 }
             }
-
         }
         initReplica();
     }
@@ -228,7 +226,7 @@ public class ServiceReplica {
      *
      * @param message the request received from the delivery thread
      */
-    public final void receiveReadonlyMessage(TOMMessage message, MessageContext msgCtx) {
+    public void receiveReadonlyMessage(TOMMessage message, MessageContext msgCtx) {
         byte[] response = null;
 
         // This is used to deliver the requests to the application and obtain a reply to deliver
@@ -503,5 +501,4 @@ public class ServiceReplica {
     public final ReplicaContext getReplicaContext() {
         return replicaCtx;
     }
-
 }
