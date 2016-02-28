@@ -2,7 +2,9 @@ package bftsmart.demo.adapt;
 
 
 import bftsmart.tom.MessageContext;
+import bftsmart.tom.ServiceProxy;
 import bftsmart.tom.ServiceReplica;
+import bftsmart.tom.core.messages.TOMMessageType;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 
 import java.io.*;
@@ -12,10 +14,12 @@ import java.util.List;
 public class AdaptServer extends DefaultRecoverable {
     public final static String ADAPT_CONFIG_HOME = "adapt-config";
     private ServiceReplica replica;
+    private int id;
     private List<ReplicaStatus> activeReplicas = new ArrayList<>();
     private List<ReplicaStatus> inactiveReplicas = new ArrayList<>();
 
     public AdaptServer(int id) {
+        this.id = id;
         replica = new ServiceReplica(id, ADAPT_CONFIG_HOME, this, this, null);
         readStatusFile(ADAPT_CONFIG_HOME + "/hosts.status");
     }
@@ -36,21 +40,22 @@ public class AdaptServer extends DefaultRecoverable {
     @Override
     public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
         System.out.println("[AdaptServer] RECEIVED!");
+        ServiceProxy serviceProxy = new ServiceProxy(2000+id, "");
+        String result = "RECONFIG ";
         try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream(4);
             int threatLevel = new DataInputStream(new ByteArrayInputStream(command)).readInt();
             if (threatLevel == 1) { //add replica
                 ReplicaStatus status = inactiveReplicas.remove(0);
                 status.setActive(true);
                 activeReplicas.add(status);
-                new DataOutputStream(out).writeUTF(status.getSmartId() + " " + status.getIp() + " " + status.getPort());
+                result += status.getSmartId() + " " + status.getIp() + " " + status.getPort();
             } else { //remove replica
                 ReplicaStatus status = activeReplicas.remove(activeReplicas.size()-1);
                 status.setActive(false);
                 inactiveReplicas.add(0, status);
-                new DataOutputStream(out).writeUTF(status.getSmartId());
+                result += status.getSmartId();
             }
-            return out.toByteArray();
+            serviceProxy.invokeUnordered(result.getBytes("UTF-8"));
         } catch (Exception e) {
             e.printStackTrace();
         }

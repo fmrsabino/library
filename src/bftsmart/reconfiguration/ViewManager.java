@@ -116,8 +116,6 @@ public class ViewManager {
             sendResponse(addIds.toArray(new Integer[1]), msg);
             addIds.clear();
         }
-
-
     }
 
     private ServerConnection getConnection(int remoteId) {
