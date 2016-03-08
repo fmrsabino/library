@@ -4,6 +4,7 @@ package bftsmart.demo.adapt;
 import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceProxy;
 import bftsmart.tom.ServiceReplica;
+import bftsmart.tom.ServiceReplicaQ;
 import bftsmart.tom.core.messages.TOMMessageType;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 
@@ -20,8 +21,8 @@ public class AdaptServer extends DefaultRecoverable {
 
     public AdaptServer(int id) {
         this.id = id;
-        replica = new ServiceReplica(id, ADAPT_CONFIG_HOME, this, this, null);
-        readStatusFile(ADAPT_CONFIG_HOME + "/hosts.status");
+        replica = new ServiceReplicaQ(id, ADAPT_CONFIG_HOME, this, this, null);
+        //readStatusFile(ADAPT_CONFIG_HOME + "/hosts.status");
     }
 
     @Override
@@ -39,7 +40,7 @@ public class AdaptServer extends DefaultRecoverable {
 
     @Override
     public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
-        System.out.println("[AdaptServer] RECEIVED!");
+        /*System.out.println("[AdaptServer] RECEIVED!");
         ServiceProxy serviceProxy = new ServiceProxy(2000+id, "");
         String result = "RECONFIG ";
         try {
@@ -58,7 +59,7 @@ public class AdaptServer extends DefaultRecoverable {
             serviceProxy.invokeUnordered(result.getBytes("UTF-8"));
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
         return new byte[0];
     }
 
