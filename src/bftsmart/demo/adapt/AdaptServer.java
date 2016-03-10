@@ -2,13 +2,10 @@ package bftsmart.demo.adapt;
 
 
 import bftsmart.tom.MessageContext;
-import bftsmart.tom.ServiceProxy;
 import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.ServiceReplicaQ;
-import bftsmart.tom.core.messages.TOMMessageType;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,8 +13,6 @@ public class AdaptServer extends DefaultRecoverable {
     public final static String ADAPT_CONFIG_HOME = "adapt-config";
     private ServiceReplica replica;
     private int id;
-    private List<ReplicaStatus> activeReplicas = new ArrayList<>();
-    private List<ReplicaStatus> inactiveReplicas = new ArrayList<>();
 
     public AdaptServer(int id) {
         this.id = id;
@@ -40,26 +35,39 @@ public class AdaptServer extends DefaultRecoverable {
 
     @Override
     public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
-        /*System.out.println("[AdaptServer] RECEIVED!");
-        ServiceProxy serviceProxy = new ServiceProxy(2000+id, "");
-        String result = "RECONFIG ";
         try {
-            int threatLevel = new DataInputStream(new ByteArrayInputStream(command)).readInt();
-            if (threatLevel == 1) { //add replica
-                ReplicaStatus status = inactiveReplicas.remove(0);
-                status.setActive(true);
-                activeReplicas.add(status);
-                result += status.getSmartId() + " " + status.getIp() + " " + status.getPort();
-            } else { //remove replica
-                ReplicaStatus status = activeReplicas.remove(activeReplicas.size()-1);
-                status.setActive(false);
-                inactiveReplicas.add(0, status);
-                result += status.getSmartId();
+            StatusMessage statusMessage = StatusMessage.deserialize(command);
+            List<StatusMessage.ReplicaStatus> activeReplicas = statusMessage.getActiveReplicas();
+            List<StatusMessage.ReplicaStatus> inactiveReplicas = statusMessage.getInactiveReplicas();
+
+            int n = statusMessage.getActiveReplicas().size();
+            int f = (int) Math.ceil((n-1)/3);
+            if (f > statusMessage.getThreatLevel()) { //decrement f
+                System.out.println("Decrement F");
+                List<StatusMessage.ReplicaStatus> replicasToRemove = new ArrayList<>(3);
+                if (activeReplicas.size() >= 3) {
+                    replicasToRemove.add(activeReplicas.remove(activeReplicas.size() - 1));
+                    replicasToRemove.add(activeReplicas.remove(activeReplicas.size() - 1));
+                    replicasToRemove.add(activeReplicas.remove(activeReplicas.size() - 1));
+                } else {
+                    System.out.println("Not enough replicas to decrement F");
+                }
+            } else if (f < statusMessage.getThreatLevel()) { //increment f
+                System.out.println("Increment F");
+                if (inactiveReplicas.size() >= 3) {
+                    List<StatusMessage.ReplicaStatus> replicasToAdd = new ArrayList<>(3);
+                    replicasToAdd.add(inactiveReplicas.remove(0));
+                    replicasToAdd.add(inactiveReplicas.remove(0));
+                    replicasToAdd.add(inactiveReplicas.remove(0));
+                } else {
+                    System.out.println("Not enough replicas to increment F");
+                }
+            } else {
+                System.out.println("Do Nothing");
             }
-            serviceProxy.invokeUnordered(result.getBytes("UTF-8"));
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
+        }
         return new byte[0];
     }
 
@@ -69,61 +77,5 @@ public class AdaptServer extends DefaultRecoverable {
             System.exit(-1);
         }
         new AdaptServer(Integer.parseInt(args[0]));
-    }
-
-    private void readStatusFile(String filepath) {
-        try (BufferedReader br = new BufferedReader(new FileReader(filepath))) {
-            System.out.println("BEGIN READ STATUS");
-            for (String line; (line = br.readLine()) != null;) {
-                System.out.println(line);
-                String[] splits = line.split(" ");
-                if (splits[3].equals("1")) {
-                    activeReplicas.add(new ReplicaStatus(splits[0], splits[1], splits[2], true));
-                } else {
-                    inactiveReplicas.add(new ReplicaStatus(splits[0], splits[1], splits[2], false));
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private class ReplicaStatus {
-        private String smartId;
-        private String ip;
-        private String port;
-        private boolean active;
-
-        public ReplicaStatus(String smartId, String ip, String port, boolean active) {
-            this.smartId = smartId;
-            this.ip = ip;
-            this.port = port;
-            this.active = active;
-        }
-
-        public String getSmartId() {
-            return smartId;
-        }
-
-        public String getIp() {
-            return ip;
-        }
-
-        public String getPort() {
-            return port;
-        }
-
-        public boolean isActive() {
-            return active;
-        }
-
-        public void setActive(boolean active) {
-            this.active = active;
-        }
-
-        @Override
-        public String toString() {
-            return smartId + " " + ip + " " + port;
-        }
     }
 }

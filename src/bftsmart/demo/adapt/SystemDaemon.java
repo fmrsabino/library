@@ -18,7 +18,6 @@ public class SystemDaemon {
     private static final String PATH_FOLDER = "status";
     private static final String FILE_NAME = "hosts.status";
 
-    private static final int THREAT_LEVEL = 1;
     //interval in seconds
     private static final int PERIOD = 10;
 
@@ -31,11 +30,11 @@ public class SystemDaemon {
                 readStatusFile(
                         PATH_FOLDER + File.separator + FILE_NAME,
                         activeReplicas, inactiveReplicas);
-
-                StatusMessage msg = new StatusMessage(activeReplicas, inactiveReplicas, THREAT_LEVEL);
+                int threatLevel = readThreatLevel(PATH_FOLDER + File.separator + "threat.status");
+                StatusMessage msg = new StatusMessage(activeReplicas, inactiveReplicas, threatLevel);
                 System.out.println("Sending Message");
                 sendMessage(msg);
-                //System.out.println(msg);
+                System.out.println(msg);
             }
         };
 
@@ -58,6 +57,17 @@ public class SystemDaemon {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static int readThreatLevel(String filepath) {
+        try (BufferedReader br = new BufferedReader(new FileReader(filepath))) {
+            for (String line; (line = br.readLine()) != null;) {
+                return Integer.parseInt(line);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     private static void sendMessage(StatusMessage statusMessage) {
