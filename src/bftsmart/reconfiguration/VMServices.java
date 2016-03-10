@@ -51,6 +51,6 @@ public class VMServices {
 		Thread.sleep(2000);//2s
 		viewManager.close();
 
-		System.exit(0);
+		//System.exit(0);
 	}
 }
