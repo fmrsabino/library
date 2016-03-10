@@ -1,8 +1,11 @@
 package bftsmart.demo.adapt;
 
+import bftsmart.demo.adapt.messages.MessageSerializer;
 import bftsmart.tom.ServiceProxy;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -25,13 +28,13 @@ public class SystemDaemon {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                List<StatusMessage.ReplicaStatus> activeReplicas = new ArrayList<>();
-                List<StatusMessage.ReplicaStatus> inactiveReplicas = new ArrayList<>();
+                List<bftsmart.demo.adapt.messages.ReplicaStatus> activeReplicas = new ArrayList<>();
+                List<bftsmart.demo.adapt.messages.ReplicaStatus> inactiveReplicas = new ArrayList<>();
                 readStatusFile(
                         PATH_FOLDER + File.separator + FILE_NAME,
                         activeReplicas, inactiveReplicas);
                 int threatLevel = readThreatLevel(PATH_FOLDER + File.separator + "threat.status");
-                StatusMessage msg = new StatusMessage(activeReplicas, inactiveReplicas, threatLevel);
+                bftsmart.demo.adapt.messages.StatusMessage msg = new bftsmart.demo.adapt.messages.StatusMessage(activeReplicas, inactiveReplicas, threatLevel);
                 System.out.println("Sending Message");
                 sendMessage(msg);
                 System.out.println(msg);
@@ -43,15 +46,15 @@ public class SystemDaemon {
     }
 
     private static void readStatusFile(String filepath,
-                                List<StatusMessage.ReplicaStatus> activeReplicas,
-                                List<StatusMessage.ReplicaStatus> inactiveReplicas) {
+                                List<bftsmart.demo.adapt.messages.ReplicaStatus> activeReplicas,
+                                List<bftsmart.demo.adapt.messages.ReplicaStatus> inactiveReplicas) {
         try (BufferedReader br = new BufferedReader(new FileReader(filepath))) {
             for (String line; (line = br.readLine()) != null;) {
                 String[] splits = line.split(" ");
                 if (splits[3].equals("1")) {
-                    activeReplicas.add(new StatusMessage.ReplicaStatus(splits[0], splits[1], splits[2], true));
+                    activeReplicas.add(new bftsmart.demo.adapt.messages.ReplicaStatus(splits[0], splits[1], splits[2], true));
                 } else {
-                    inactiveReplicas.add(new StatusMessage.ReplicaStatus(splits[0], splits[1], splits[2], false));
+                    inactiveReplicas.add(new bftsmart.demo.adapt.messages.ReplicaStatus(splits[0], splits[1], splits[2], false));
                 }
             }
         } catch (Exception e) {
@@ -70,11 +73,11 @@ public class SystemDaemon {
         return -1;
     }
 
-    private static void sendMessage(StatusMessage statusMessage) {
+    private static void sendMessage(bftsmart.demo.adapt.messages.StatusMessage statusMessage) {
         try {
             ServiceProxy serviceProxy = new ServiceProxy(0, "adapt-config");
             serviceProxy.setInvokeTimeout(0);
-            serviceProxy.invokeUnordered(StatusMessage.serialize(statusMessage));
+            serviceProxy.invokeUnordered(MessageSerializer.serialize(statusMessage));
         } catch (Exception e) {
             e.printStackTrace();
         }
