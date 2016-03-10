@@ -1,14 +1,12 @@
 package bftsmart.tom;
 
-import bftsmart.demo.adapt.StatusMessage;
+import bftsmart.demo.adapt.messages.MessageSerializer;
+import bftsmart.demo.adapt.messages.QuorumMessage;
 import bftsmart.tom.core.messages.TOMMessage;
 import bftsmart.tom.server.Executable;
 import bftsmart.tom.server.Recoverable;
 import bftsmart.tom.server.RequestVerifier;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +17,7 @@ import java.util.Map;
  */
 public class ServiceReplicaQ extends ServiceReplica {
     private static final int QUORUM_SIZE = 3;
-    private Map<Integer, List<StatusMessage>> msgsReceived = new HashMap<>();
+    private Map<Integer, List<QuorumMessage>> msgsReceived = new HashMap<>();
 
     public ServiceReplicaQ
             (int id, Executable executor, Recoverable recoverer) {
@@ -34,7 +32,7 @@ public class ServiceReplicaQ extends ServiceReplica {
     @Override
     public void receiveReadonlyMessage(TOMMessage message, MessageContext msgCtx) {
         try {
-            StatusMessage statusMessage = StatusMessage.deserialize(message.getContent());
+            QuorumMessage statusMessage = MessageSerializer.deserialize(message.getContent());
             if (updateMap(statusMessage) != null) {
                 msgsReceived.clear();
                 System.out.println("Quorum reached!");
@@ -47,9 +45,9 @@ public class ServiceReplicaQ extends ServiceReplica {
     }
 
     //Returns StatusMessage if the quorum for that message has been reached (null otherwise)
-    private StatusMessage updateMap(StatusMessage statusMessage) {
+    private QuorumMessage updateMap(QuorumMessage statusMessage) {
         int msgHash = statusMessage.hashCode();
-        List<StatusMessage> msgs;
+        List<QuorumMessage> msgs;
         if (!msgsReceived.containsKey(msgHash)) {
             msgs = new ArrayList<>();
             msgs.add(statusMessage);
