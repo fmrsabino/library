@@ -21,7 +21,6 @@ public class AdaptServer extends DefaultRecoverable {
     public AdaptServer(int id) {
         this.id = id;
         replica = new ServiceReplicaQ(id, ADAPT_CONFIG_HOME, this, this, null);
-        //readStatusFile(ADAPT_CONFIG_HOME + "/hosts.status");
     }
 
     @Override
