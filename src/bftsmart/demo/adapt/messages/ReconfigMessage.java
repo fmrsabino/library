@@ -27,4 +27,12 @@ public class ReconfigMessage implements QuorumMessage, Serializable {
         }
         return hash + command;
     }
+
+    public int getCommand() {
+        return command;
+    }
+
+    public List<ReplicaStatus> getReplicas() {
+        return replicas;
+    }
 }
