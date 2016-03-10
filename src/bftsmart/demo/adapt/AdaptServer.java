@@ -1,7 +1,11 @@
 package bftsmart.demo.adapt;
 
 
+import bftsmart.demo.adapt.messages.MessageSerializer;
+import bftsmart.demo.adapt.messages.ReconfigMessage;
+import bftsmart.demo.adapt.messages.StatusMessage;
 import bftsmart.tom.MessageContext;
+import bftsmart.tom.ServiceProxy;
 import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.ServiceReplicaQ;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
@@ -36,34 +40,42 @@ public class AdaptServer extends DefaultRecoverable {
     @Override
     public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
         try {
-            StatusMessage statusMessage = StatusMessage.deserialize(command);
-            List<StatusMessage.ReplicaStatus> activeReplicas = statusMessage.getActiveReplicas();
-            List<StatusMessage.ReplicaStatus> inactiveReplicas = statusMessage.getInactiveReplicas();
+            StatusMessage statusMessage = MessageSerializer.deserialize(command);
+            List<bftsmart.demo.adapt.messages.ReplicaStatus> activeReplicas = statusMessage.getActiveReplicas();
+            List<bftsmart.demo.adapt.messages.ReplicaStatus> inactiveReplicas = statusMessage.getInactiveReplicas();
 
+            ReconfigMessage reconfigMessage = null;
             int n = statusMessage.getActiveReplicas().size();
             int f = (int) Math.ceil((n-1)/3);
             if (f > statusMessage.getThreatLevel()) { //decrement f
                 System.out.println("Decrement F");
-                List<StatusMessage.ReplicaStatus> replicasToRemove = new ArrayList<>(3);
+                List<bftsmart.demo.adapt.messages.ReplicaStatus> replicasToRemove = new ArrayList<>(3);
                 if (activeReplicas.size() >= 3) {
                     replicasToRemove.add(activeReplicas.remove(activeReplicas.size() - 1));
                     replicasToRemove.add(activeReplicas.remove(activeReplicas.size() - 1));
                     replicasToRemove.add(activeReplicas.remove(activeReplicas.size() - 1));
+                    reconfigMessage = new ReconfigMessage(ReconfigMessage.REMOVE_REPLICAS, replicasToRemove);
                 } else {
                     System.out.println("Not enough replicas to decrement F");
                 }
             } else if (f < statusMessage.getThreatLevel()) { //increment f
                 System.out.println("Increment F");
                 if (inactiveReplicas.size() >= 3) {
-                    List<StatusMessage.ReplicaStatus> replicasToAdd = new ArrayList<>(3);
+                    List<bftsmart.demo.adapt.messages.ReplicaStatus> replicasToAdd = new ArrayList<>(3);
                     replicasToAdd.add(inactiveReplicas.remove(0));
                     replicasToAdd.add(inactiveReplicas.remove(0));
                     replicasToAdd.add(inactiveReplicas.remove(0));
+                    reconfigMessage = new ReconfigMessage(ReconfigMessage.ADD_REPLICAS, replicasToAdd);
                 } else {
                     System.out.println("Not enough replicas to increment F");
                 }
             } else {
                 System.out.println("Do Nothing");
+            }
+            if (reconfigMessage != null) {
+                ServiceProxy serviceProxy = new ServiceProxy(10, "config");
+                serviceProxy.setInvokeTimeout(0);
+                serviceProxy.invokeUnordered(MessageSerializer.serialize(reconfigMessage));
             }
         } catch (Exception e) {
             e.printStackTrace();
