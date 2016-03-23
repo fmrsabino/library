@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReconfigMessage implements QuorumMessage, Serializable {
+public class ReconfigMessage implements AdaptMessage, Serializable {
 
     public static final int ADD_REPLICAS = 0;
     public static final int REMOVE_REPLICAS = 1;

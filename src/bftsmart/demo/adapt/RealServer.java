@@ -1,28 +1,54 @@
 package bftsmart.demo.adapt;
 
-import bftsmart.demo.adapt.messages.*;
-import bftsmart.demo.adapt.messages.ReplicaStatus;
-import bftsmart.reconfiguration.VMServices;
 import bftsmart.tom.MessageContext;
-import bftsmart.tom.ServiceReplicaQ;
+import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
+
+import java.io.*;
 
 public class RealServer extends DefaultRecoverable {
 
-    private ServiceReplicaQ replica;
+    private ServiceReplica replica;
     private int id;
+    private int internalState = 0;
 
     public RealServer(int id) {
         this.id = id;
-        replica = new ServiceReplicaQ(id, this, this);
+        replica = new ServiceReplica(id, this, this);
     }
 
     @Override
-    public void installSnapshot(byte[] state) {}
+    public void installSnapshot(byte[] state) {
+        try {
+            //System.out.println("setState called");
+            ByteArrayInputStream bis = new ByteArrayInputStream(state);
+            ObjectInput in = new ObjectInputStream(bis);
+            internalState =  in.readInt();
+            in.close();
+            bis.close();
+        } catch (Exception e) {
+            System.err.println("[ERROR] Error deserializing state: "
+                    + e.getMessage());
+        }
+    }
 
     @Override
     public byte[] getSnapshot() {
-        return new byte[0];
+        try {
+            //System.out.println("getState called");
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutput out = new ObjectOutputStream(bos);
+            out.writeInt(internalState);
+            out.flush();
+            bos.flush();
+            out.close();
+            bos.close();
+            return bos.toByteArray();
+        } catch (Exception e) {
+            System.err.println("[ERROR] Error serializing state: "
+                    + e.getMessage());
+            return "ERROR".getBytes();
+        }
     }
 
     @Override
@@ -32,8 +58,8 @@ public class RealServer extends DefaultRecoverable {
 
     @Override
     public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
-        System.out.println("[RealServer] RECEIVED!");
-        if (id != 0) { return new byte[0];}
+        //System.out.println("[RealServer] RECEIVED!");
+        /*if (id != 0) { return new byte[0];}
         try {
             ReconfigMessage reconfigMessage = MessageSerializer.deserialize(command);
             if (reconfigMessage.getCommand() == ReconfigMessage.ADD_REPLICAS) {
@@ -47,7 +73,7 @@ public class RealServer extends DefaultRecoverable {
             }
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
         return new byte[0];
     }
 

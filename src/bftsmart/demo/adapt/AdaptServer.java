@@ -1,84 +1,96 @@
 package bftsmart.demo.adapt;
 
 
-import bftsmart.demo.adapt.messages.MessageSerializer;
-import bftsmart.demo.adapt.messages.ReconfigMessage;
 import bftsmart.demo.adapt.messages.StatusMessage;
+import bftsmart.demo.adapt.policies.AdaptPolicy;
+import bftsmart.demo.adapt.policies.MiddleValue;
+import bftsmart.demo.adapt.util.MessageSerializer;
 import bftsmart.tom.MessageContext;
-import bftsmart.tom.ServiceProxy;
 import bftsmart.tom.ServiceReplica;
-import bftsmart.tom.ServiceReplicaQ;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class AdaptServer extends DefaultRecoverable {
+    public static final int N_SENSORS = 4;
     public final static String ADAPT_CONFIG_HOME = "adapt-config";
+    private int internalState = 0;
     private ServiceReplica replica;
     private int id;
 
+    private List<StatusMessage> statusMessages = new ArrayList<>();
+
     public AdaptServer(int id) {
         this.id = id;
-        replica = new ServiceReplicaQ(id, ADAPT_CONFIG_HOME, this, this, null);
+        replica = new ServiceReplica(id, ADAPT_CONFIG_HOME, this, this, null);
     }
 
     @Override
-    public void installSnapshot(byte[] state) {}
+    public void installSnapshot(byte[] state) {
+        try {
+            //System.out.println("setState called");
+            ByteArrayInputStream bis = new ByteArrayInputStream(state);
+            ObjectInput in = new ObjectInputStream(bis);
+            internalState =  in.readInt();
+            in.close();
+            bis.close();
+        } catch (Exception e) {
+            System.err.println("[ERROR] Error deserializing state: "
+                    + e.getMessage());
+        }
+    }
 
     @Override
     public byte[] getSnapshot() {
-        return new byte[0];
+        try {
+            //System.out.println("getState called");
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutput out = new ObjectOutputStream(bos);
+            out.writeInt(internalState);
+            out.flush();
+            bos.flush();
+            out.close();
+            bos.close();
+            return bos.toByteArray();
+        } catch (Exception e) {
+            System.err.println("[ERROR] Error serializing state: "
+                    + e.getMessage());
+            return "ERROR".getBytes();
+        }
     }
 
     @Override
     public byte[][] appExecuteBatch(byte[][] commands, MessageContext[] msgCtxs) {
-        return new byte[0][];
+        byte [][] replies = new byte[commands.length][];
+        for (int i = 0; i < commands.length; i++) {
+            if (msgCtxs != null && msgCtxs[i] != null) {
+                replies[i] = executeSingle(commands[i], msgCtxs[i]);
+            }
+        }
+        return replies;
     }
 
-    @Override
-    public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
+    private byte[] executeSingle(byte[] command, MessageContext msgCtx) {
         try {
-            StatusMessage statusMessage = MessageSerializer.deserialize(command);
-            List<bftsmart.demo.adapt.messages.ReplicaStatus> activeReplicas = statusMessage.getActiveReplicas();
-            List<bftsmart.demo.adapt.messages.ReplicaStatus> inactiveReplicas = statusMessage.getInactiveReplicas();
-
-            ReconfigMessage reconfigMessage = null;
-            int n = statusMessage.getActiveReplicas().size();
-            int f = (int) Math.ceil((n-1)/3);
-            if (f > statusMessage.getThreatLevel()) { //decrement f
-                System.out.println("Decrement F");
-                List<bftsmart.demo.adapt.messages.ReplicaStatus> replicasToRemove = new ArrayList<>(3);
-                if (activeReplicas.size() >= 3) {
-                    replicasToRemove.add(activeReplicas.remove(activeReplicas.size() - 1));
-                    replicasToRemove.add(activeReplicas.remove(activeReplicas.size() - 1));
-                    replicasToRemove.add(activeReplicas.remove(activeReplicas.size() - 1));
-                    reconfigMessage = new ReconfigMessage(ReconfigMessage.REMOVE_REPLICAS, replicasToRemove);
-                } else {
-                    System.out.println("Not enough replicas to decrement F");
+            StatusMessage sm = MessageSerializer.deserialize(command);
+            int f = replica.getSVController().getCurrentViewF();
+            if (statusMessages.size() <= 2*f+1) {
+                statusMessages.add(sm);
+                if (statusMessages.size() == 2*f+1) {
+                    AdaptPolicy<StatusMessage> adaptPolicy = new MiddleValue();
+                    adaptPolicy.execute(statusMessages);
                 }
-            } else if (f < statusMessage.getThreatLevel()) { //increment f
-                System.out.println("Increment F");
-                if (inactiveReplicas.size() >= 3) {
-                    List<bftsmart.demo.adapt.messages.ReplicaStatus> replicasToAdd = new ArrayList<>(3);
-                    replicasToAdd.add(inactiveReplicas.remove(0));
-                    replicasToAdd.add(inactiveReplicas.remove(0));
-                    replicasToAdd.add(inactiveReplicas.remove(0));
-                    reconfigMessage = new ReconfigMessage(ReconfigMessage.ADD_REPLICAS, replicasToAdd);
-                } else {
-                    System.out.println("Not enough replicas to increment F");
-                }
-            } else {
-                System.out.println("Do Nothing");
-            }
-            if (reconfigMessage != null) {
-                ServiceProxy serviceProxy = new ServiceProxy(10, "config");
-                serviceProxy.setInvokeTimeout(0);
-                serviceProxy.invokeUnordered(MessageSerializer.serialize(reconfigMessage));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return new byte[] {0};
+    }
+
+    @Override
+    public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
         return new byte[0];
     }
 
