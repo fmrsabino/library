@@ -1,6 +1,7 @@
 package bftsmart.demo.adapt;
 
-import bftsmart.demo.adapt.messages.MessageSerializer;
+import bftsmart.demo.adapt.messages.AdaptMessage;
+import bftsmart.demo.adapt.messages.StatusMessage;
 import bftsmart.tom.ServiceProxy;
 
 import java.io.BufferedReader;
@@ -8,9 +9,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Periodically reads the system model and the security model
@@ -22,27 +20,29 @@ public class SystemDaemon {
     private static final String FILE_NAME = "hosts.status";
 
     //interval in seconds
-    private static final int PERIOD = 10;
+    private static final int PERIOD = 2;
 
     public static void main(String[] args) {
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
+        //Runnable runnable = new Runnable() {
+        //    @Override
+          //  public void run() {
                 List<bftsmart.demo.adapt.messages.ReplicaStatus> activeReplicas = new ArrayList<>();
                 List<bftsmart.demo.adapt.messages.ReplicaStatus> inactiveReplicas = new ArrayList<>();
                 readStatusFile(
                         PATH_FOLDER + File.separator + FILE_NAME,
                         activeReplicas, inactiveReplicas);
-                int threatLevel = readThreatLevel(PATH_FOLDER + File.separator + "threat.status");
-                bftsmart.demo.adapt.messages.StatusMessage msg = new bftsmart.demo.adapt.messages.StatusMessage(activeReplicas, inactiveReplicas, threatLevel);
+                //int threatLevel = readThreatLevel(PATH_FOLDER + File.separator + "threat.status");
+                int threatLevel = Integer.parseInt(args[0]);
+                AdaptMessage msg = new StatusMessage();
                 System.out.println("Sending Message");
                 sendMessage(msg);
-                System.out.println(msg);
-            }
-        };
+                //System.out.println(msg);
+          //  }
+        //};
 
-        ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
-        service.scheduleAtFixedRate(runnable, 0, PERIOD, TimeUnit.SECONDS);
+        //ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+        //service.scheduleAtFixedRate(runnable, 0, PERIOD, TimeUnit.SECONDS);
+        System.exit(0);
     }
 
     private static void readStatusFile(String filepath,
@@ -73,13 +73,18 @@ public class SystemDaemon {
         return -1;
     }
 
-    private static void sendMessage(bftsmart.demo.adapt.messages.StatusMessage statusMessage) {
+    private static void sendMessage(AdaptMessage adaptMessage) {
+        ServiceProxy serviceProxy = null;
         try {
-            ServiceProxy serviceProxy = new ServiceProxy(0, "adapt-config");
-            serviceProxy.setInvokeTimeout(0);
-            serviceProxy.invokeUnordered(MessageSerializer.serialize(statusMessage));
+            serviceProxy = new ServiceProxy(1001, AdaptServer.ADAPT_CONFIG_HOME);
+            byte[] reply = serviceProxy.invokeOrdered(new byte[] {1});
+            System.out.println("Reply: " +  reply);
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            if (serviceProxy != null) {
+                serviceProxy.close();
+            }
         }
     }
 }

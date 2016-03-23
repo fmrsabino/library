@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StatusMessage implements QuorumMessage, Serializable {
+public class StatusMessage implements AdaptMessage, Serializable {
     private List<ReplicaStatus> activeReplicas = new ArrayList<>();
     private List<ReplicaStatus> inactiveReplicas = new ArrayList<>();
     private int threatLevel;

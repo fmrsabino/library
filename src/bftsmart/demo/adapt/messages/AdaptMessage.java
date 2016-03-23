@@ -1,3 +1,3 @@
 package bftsmart.demo.adapt.messages;
 
-public interface QuorumMessage {}
+public interface AdaptMessage {}
