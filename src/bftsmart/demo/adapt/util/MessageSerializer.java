@@ -1,4 +1,4 @@
-package bftsmart.demo.adapt.messages;
+package bftsmart.demo.adapt.util;
 
 import java.io.*;
 
