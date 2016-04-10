@@ -10,6 +10,7 @@ public class MessageSerializer {
         return out.toByteArray();
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T deserialize(byte[] data) throws IOException, ClassNotFoundException {
         ByteArrayInputStream in = new ByteArrayInputStream(data);
         ObjectInputStream ois = new ObjectInputStream(in);

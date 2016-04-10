@@ -2,11 +2,12 @@ package bftsmart.demo.adapt;
 
 import bftsmart.demo.adapt.messages.AdaptMessage;
 import bftsmart.demo.adapt.messages.StatusMessage;
+import bftsmart.demo.adapt.util.Constants;
+import bftsmart.demo.adapt.util.FileUtil;
+import bftsmart.demo.adapt.util.MessageSerializer;
 import bftsmart.tom.ServiceProxy;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,10 +16,6 @@ import java.util.List;
  * and notifies the adapt system of the new values
  */
 public class SystemDaemon {
-
-    private static final String PATH_FOLDER = "status";
-    private static final String FILE_NAME = "hosts.status";
-
     //interval in seconds
     private static final int PERIOD = 2;
 
@@ -28,12 +25,10 @@ public class SystemDaemon {
           //  public void run() {
                 List<bftsmart.demo.adapt.messages.ReplicaStatus> activeReplicas = new ArrayList<>();
                 List<bftsmart.demo.adapt.messages.ReplicaStatus> inactiveReplicas = new ArrayList<>();
-                readStatusFile(
-                        PATH_FOLDER + File.separator + FILE_NAME,
-                        activeReplicas, inactiveReplicas);
-                //int threatLevel = readThreatLevel(PATH_FOLDER + File.separator + "threat.status");
-                int threatLevel = Integer.parseInt(args[0]);
-                AdaptMessage msg = new StatusMessage();
+                readStatusFile(Constants.HOSTS_STATUS_PATH, activeReplicas, inactiveReplicas);
+                int threatLevel = readThreatLevel(Constants.THREAT_LEVEL_PATH);
+                threatLevel = (int) (Math.random() * 100);
+                StatusMessage msg = new StatusMessage(activeReplicas, inactiveReplicas, threatLevel);
                 System.out.println("Sending Message");
                 sendMessage(msg);
                 //System.out.println(msg);
@@ -48,36 +43,30 @@ public class SystemDaemon {
     private static void readStatusFile(String filepath,
                                 List<bftsmart.demo.adapt.messages.ReplicaStatus> activeReplicas,
                                 List<bftsmart.demo.adapt.messages.ReplicaStatus> inactiveReplicas) {
-        try (BufferedReader br = new BufferedReader(new FileReader(filepath))) {
-            for (String line; (line = br.readLine()) != null;) {
-                String[] splits = line.split(" ");
+        List<String> lines = FileUtil.readFileLines(filepath);
+        lines.stream().forEach(l -> {
+            String[] splits = l.split(" ");
+            if (splits.length >= 4) {
                 if (splits[3].equals("1")) {
                     activeReplicas.add(new bftsmart.demo.adapt.messages.ReplicaStatus(splits[0], splits[1], splits[2], true));
                 } else {
                     inactiveReplicas.add(new bftsmart.demo.adapt.messages.ReplicaStatus(splits[0], splits[1], splits[2], false));
                 }
+
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        });
     }
 
     private static int readThreatLevel(String filepath) {
-        try (BufferedReader br = new BufferedReader(new FileReader(filepath))) {
-            for (String line; (line = br.readLine()) != null;) {
-                return Integer.parseInt(line);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return -1;
+        List<String> lines = FileUtil.readFileLines(filepath);
+        return lines.isEmpty() ? -1 : Integer.parseInt(lines.get(0));
     }
 
     private static void sendMessage(AdaptMessage adaptMessage) {
         ServiceProxy serviceProxy = null;
         try {
-            serviceProxy = new ServiceProxy(1001, AdaptServer.ADAPT_CONFIG_HOME);
-            byte[] reply = serviceProxy.invokeOrdered(new byte[] {1});
+            serviceProxy = new ServiceProxy(1001, Constants.ADAPT_HOME_FOLDER);
+            byte[] reply = serviceProxy.invokeOrdered(MessageSerializer.serialize(adaptMessage));
             System.out.println("Reply: " +  reply);
         } catch (Exception e) {
             e.printStackTrace();
