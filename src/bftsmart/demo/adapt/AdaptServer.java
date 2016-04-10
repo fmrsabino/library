@@ -3,19 +3,22 @@ package bftsmart.demo.adapt;
 
 import bftsmart.demo.adapt.messages.StatusMessage;
 import bftsmart.demo.adapt.policies.AdaptPolicy;
-import bftsmart.demo.adapt.policies.MiddleValue;
+import bftsmart.demo.adapt.policies.Policies;
+import bftsmart.demo.adapt.util.Constants;
 import bftsmart.demo.adapt.util.MessageSerializer;
 import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.builder.fluent.Configurations;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class AdaptServer extends DefaultRecoverable {
-    public static final int N_SENSORS = 4;
-    public final static String ADAPT_CONFIG_HOME = "adapt-config";
+    public final static Configurations configurations = new Configurations();
     private int internalState = 0;
     private ServiceReplica replica;
     private int id;
@@ -24,7 +27,7 @@ public class AdaptServer extends DefaultRecoverable {
 
     public AdaptServer(int id) {
         this.id = id;
-        replica = new ServiceReplica(id, ADAPT_CONFIG_HOME, this, this, null);
+        replica = new ServiceReplica(id, Constants.ADAPT_HOME_FOLDER, this, this, null);
     }
 
     @Override
@@ -76,17 +79,37 @@ public class AdaptServer extends DefaultRecoverable {
         try {
             StatusMessage sm = MessageSerializer.deserialize(command);
             int f = replica.getSVController().getCurrentViewF();
-            if (statusMessages.size() <= 2*f+1) {
+            if (statusMessages.size() <= getSensorsQuorum()) {
                 statusMessages.add(sm);
-                if (statusMessages.size() == 2*f+1) {
-                    AdaptPolicy<StatusMessage> adaptPolicy = new MiddleValue();
-                    adaptPolicy.execute(statusMessages);
+                if (statusMessages.size() == getSensorsQuorum()) {
+                    AdaptPolicy<StatusMessage> policy = Policies.getCurrentPolicy();
+                    if (policy != null) {
+                        policy.execute(statusMessages);
+                    } else {
+                        System.err.println("Error: Couldn't find policy.");
+                    }
+                    statusMessages.clear();
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return new byte[] {0};
+    }
+
+    private int getSensorsQuorum() {
+        return 2 * getSensorsF() + 1;
+    }
+
+    private int getSensorsF() {
+        try {
+            Configuration config = configurations.properties(new File(Constants.ADAPT_CONFIG_PATH));
+            int n = config.getInt(Constants.N_SENSORS_KEY);
+            return (n - 1) / 3;
+        } catch (ConfigurationException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     @Override

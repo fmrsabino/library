@@ -1,7 +1,6 @@
 package bftsmart.demo.adapt;
 
 import bftsmart.tom.ServiceProxy;
-import bftsmart.tom.core.messages.TOMMessageType;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
