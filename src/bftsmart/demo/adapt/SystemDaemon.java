@@ -43,8 +43,7 @@ public class SystemDaemon {
     private static void readStatusFile(String filepath,
                                 List<bftsmart.demo.adapt.messages.ReplicaStatus> activeReplicas,
                                 List<bftsmart.demo.adapt.messages.ReplicaStatus> inactiveReplicas) {
-        List<String> lines = FileUtil.readFileLines(filepath);
-        lines.stream().forEach(l -> {
+        FileUtil.readFileLines(filepath).stream().forEach(l -> {
             String[] splits = l.split(" ");
             if (splits.length >= 4) {
                 if (splits[3].equals("1")) {
