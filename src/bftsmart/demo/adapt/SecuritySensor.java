@@ -1,13 +1,12 @@
 package bftsmart.demo.adapt;
 
-import bftsmart.demo.adapt.messages.AdaptMessage;
-import bftsmart.demo.adapt.messages.StatusMessage;
+import bftsmart.demo.adapt.messages.SensorMessage;
+import bftsmart.demo.adapt.messages.ThreatLevelMessage;
 import bftsmart.demo.adapt.util.Constants;
 import bftsmart.demo.adapt.util.FileUtil;
 import bftsmart.demo.adapt.util.MessageSerializer;
 import bftsmart.tom.ServiceProxy;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +14,7 @@ import java.util.List;
  * Periodically reads the system model and the security model
  * and notifies the adapt system of the new values
  */
-public class SystemDaemon {
+public class SecuritySensor {
     //interval in seconds
     private static final int PERIOD = 2;
 
@@ -27,8 +26,8 @@ public class SystemDaemon {
                 List<bftsmart.demo.adapt.messages.ReplicaStatus> inactiveReplicas = new ArrayList<>();
                 readStatusFile(Constants.HOSTS_STATUS_PATH, activeReplicas, inactiveReplicas);
                 int threatLevel = readThreatLevel(Constants.THREAT_LEVEL_PATH);
-                threatLevel = (int) (Math.random() * 100);
-                StatusMessage msg = new StatusMessage(activeReplicas, inactiveReplicas, threatLevel);
+                //threatLevel = (int) (Math.random() * 100);
+                ThreatLevelMessage msg = new ThreatLevelMessage(activeReplicas, inactiveReplicas, threatLevel);
                 System.out.println("Sending Message");
                 sendMessage(msg);
                 //System.out.println(msg);
@@ -61,11 +60,11 @@ public class SystemDaemon {
         return lines.isEmpty() ? -1 : Integer.parseInt(lines.get(0));
     }
 
-    private static void sendMessage(AdaptMessage adaptMessage) {
+    private static void sendMessage(SensorMessage sensorMessage) {
         ServiceProxy serviceProxy = null;
         try {
             serviceProxy = new ServiceProxy(1001, Constants.ADAPT_HOME_FOLDER);
-            byte[] reply = serviceProxy.invokeOrdered(MessageSerializer.serialize(adaptMessage));
+            byte[] reply = serviceProxy.invokeOrdered(MessageSerializer.serialize(sensorMessage));
             System.out.println("Reply: " +  reply);
         } catch (Exception e) {
             e.printStackTrace();

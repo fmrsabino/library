@@ -15,4 +15,5 @@ public class Constants {
     //Config keys
     public static final String N_SENSORS_KEY = "n.sensors";
     public static final String ADAPT_POLICY_KEY = "adapt.policy";
+    public static final String SENSOR_TYPE = "adapt.sensor.type";
 }

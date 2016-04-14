@@ -1,9 +1,7 @@
 package bftsmart.demo.adapt.policies;
 
-import bftsmart.demo.adapt.messages.StatusMessage;
+import bftsmart.demo.adapt.messages.SensorMessage;
 
-import java.util.List;
-
-public interface AdaptPolicy<T extends StatusMessage> {
-    void execute(List<T> messages);
+public interface AdaptPolicy<T extends SensorMessage> {
+    void execute(T message);
 }
