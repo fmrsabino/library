@@ -1,4 +1,4 @@
-package bftsmart.demo.adapt.policies;
+package bftsmart.demo.adapt.extractor;
 
 import bftsmart.demo.adapt.util.Constants;
 import org.apache.commons.configuration2.Configuration;
@@ -9,19 +9,19 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Policies {
-    private static final Map<String, AdaptPolicy> map = new HashMap<>();
+public class Extractors {
+    private static final Map<String, ValueExtractor> map = new HashMap<>();
     private static final Configurations configurations = new Configurations();
 
 
     static {
-        map.put("changeF", new ChangeFPolicy());
+        map.put("threatSensor", new ThreatLevelExtractor());
     }
 
-    public static AdaptPolicy getCurrentPolicy() {
+    public static ValueExtractor getCurrentExtractor() {
         try {
             Configuration config = configurations.properties(new File(Constants.ADAPT_CONFIG_PATH));
-            return map.get(config.getString(Constants.ADAPT_POLICY_KEY));
+            return map.get(config.getString(Constants.SENSOR_TYPE));
         } catch (ConfigurationException e) {
             e.printStackTrace();
         }

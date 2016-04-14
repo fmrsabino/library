@@ -1,17 +1,17 @@
 package bftsmart.demo.adapt.messages;
 
-import java.io.*;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StatusMessage implements AdaptMessage, Serializable {
+public class ThreatLevelMessage implements SensorMessage, Serializable {
     private List<ReplicaStatus> activeReplicas = new ArrayList<>();
     private List<ReplicaStatus> inactiveReplicas = new ArrayList<>();
     private int threatLevel;
 
-    public StatusMessage() {}
+    public ThreatLevelMessage() {}
 
-    public StatusMessage(List<ReplicaStatus> activeReplicas, List<ReplicaStatus> inactiveReplicas, int threatLevel) {
+    public ThreatLevelMessage(List<ReplicaStatus> activeReplicas, List<ReplicaStatus> inactiveReplicas, int threatLevel) {
         this.activeReplicas = activeReplicas;
         this.inactiveReplicas = inactiveReplicas;
         this.threatLevel = threatLevel;

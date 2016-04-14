@@ -1,9 +1,12 @@
 package bftsmart.demo.adapt;
 
 
-import bftsmart.demo.adapt.messages.StatusMessage;
+import bftsmart.demo.adapt.extractor.Extractors;
+import bftsmart.demo.adapt.extractor.ValueExtractor;
+import bftsmart.demo.adapt.messages.SensorMessage;
 import bftsmart.demo.adapt.policies.AdaptPolicy;
 import bftsmart.demo.adapt.policies.Policies;
+import bftsmart.demo.adapt.util.BftUtils;
 import bftsmart.demo.adapt.util.Constants;
 import bftsmart.demo.adapt.util.MessageSerializer;
 import bftsmart.tom.MessageContext;
@@ -23,11 +26,19 @@ public class AdaptServer extends DefaultRecoverable {
     private ServiceReplica replica;
     private int id;
 
-    private List<StatusMessage> statusMessages = new ArrayList<>();
+    private List<SensorMessage> sensorMessages = new ArrayList<>();
 
     public AdaptServer(int id) {
         this.id = id;
         replica = new ServiceReplica(id, Constants.ADAPT_HOME_FOLDER, this, this, null);
+    }
+
+    public static void main(String[] args) {
+        if (args.length < 1) {
+            System.out.println("Use: java AdaptServer <processId>");
+            System.exit(-1);
+        }
+        new AdaptServer(Integer.parseInt(args[0]));
     }
 
     @Override
@@ -77,19 +88,24 @@ public class AdaptServer extends DefaultRecoverable {
 
     private byte[] executeSingle(byte[] command, MessageContext msgCtx) {
         try {
-            StatusMessage sm = MessageSerializer.deserialize(command);
-            int f = replica.getSVController().getCurrentViewF();
-            if (statusMessages.size() <= getSensorsQuorum()) {
-                statusMessages.add(sm);
-                if (statusMessages.size() == getSensorsQuorum()) {
-                    AdaptPolicy<StatusMessage> policy = Policies.getCurrentPolicy();
+            SensorMessage sm = MessageSerializer.deserialize(command);
+            if (sensorMessages.size() <= BftUtils.getQuorum(getSensorsF())) {
+                sensorMessages.add(sm);
+            }
+            if (sensorMessages.size() == BftUtils.getQuorum(getSensorsF())) {
+                ValueExtractor valueExtractor = Extractors.getCurrentExtractor();
+                if (valueExtractor != null) {
+                    SensorMessage sensorMessage = valueExtractor.extract(sensorMessages);
+                    AdaptPolicy policy = Policies.getCurrentPolicy();
                     if (policy != null) {
-                        policy.execute(statusMessages);
+                        policy.execute(sensorMessage);
                     } else {
                         System.err.println("Error: Couldn't find policy.");
                     }
-                    statusMessages.clear();
+                } else {
+                    System.err.println("Error: Couldn't find extractor");
                 }
+                sensorMessages.clear();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -97,15 +113,11 @@ public class AdaptServer extends DefaultRecoverable {
         return new byte[] {0};
     }
 
-    private int getSensorsQuorum() {
-        return 2 * getSensorsF() + 1;
-    }
-
     private int getSensorsF() {
         try {
             Configuration config = configurations.properties(new File(Constants.ADAPT_CONFIG_PATH));
             int n = config.getInt(Constants.N_SENSORS_KEY);
-            return (n - 1) / 3;
+            return BftUtils.getF(n);
         } catch (ConfigurationException e) {
             e.printStackTrace();
         }
@@ -115,13 +127,5 @@ public class AdaptServer extends DefaultRecoverable {
     @Override
     public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
         return new byte[0];
-    }
-
-    public static void main(String[] args) {
-        if (args.length < 1) {
-            System.out.println("Use: java AdaptServer <processId>");
-            System.exit(-1);
-        }
-        new AdaptServer(Integer.parseInt(args[0]));
     }
 }
