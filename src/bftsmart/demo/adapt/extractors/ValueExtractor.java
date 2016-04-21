@@ -1,6 +1,6 @@
-package bftsmart.demo.adapt.extractor;
+package bftsmart.demo.adapt.extractors;
 
-import bftsmart.demo.adapt.messages.SensorMessage;
+import bftsmart.demo.adapt.messages.sensor.SensorMessage;
 
 import java.util.List;
 

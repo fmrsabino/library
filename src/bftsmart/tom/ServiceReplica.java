@@ -148,6 +148,10 @@ public class ServiceReplica {
         this.verifier = verifier;
     }
 
+    public void setRequestTimeout(long timeout) {
+        tomLayer.requestsTimer.setTimeout(timeout);
+    }
+
     public void setReplyController(Replier replier) {
         this.replier = replier;
     }

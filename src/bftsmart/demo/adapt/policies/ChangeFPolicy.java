@@ -1,13 +1,13 @@
 package bftsmart.demo.adapt.policies;
 
-import bftsmart.demo.adapt.messages.ReplicaStatus;
-import bftsmart.demo.adapt.messages.ThreatLevelMessage;
+import bftsmart.demo.adapt.messages.sensor.ReplicaStatus;
+import bftsmart.demo.adapt.messages.sensor.ThreatLevelMessage;
 import bftsmart.demo.adapt.util.BftUtils;
 import bftsmart.reconfiguration.VMServices;
 
 public class ChangeFPolicy implements AdaptPolicy<ThreatLevelMessage> {
     @Override
-    public void execute(ThreatLevelMessage message) {
+    public void execute(int executorId, ThreatLevelMessage message) {
         int threatLevel = message.getThreatLevel();
         int f = BftUtils.getF(message.getActiveReplicas().size());
         if (threatLevel == 0 && f == 2) { //remove replicas

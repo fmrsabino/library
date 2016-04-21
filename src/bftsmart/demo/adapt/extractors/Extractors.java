@@ -1,4 +1,4 @@
-package bftsmart.demo.adapt.extractor;
+package bftsmart.demo.adapt.extractors;
 
 import bftsmart.demo.adapt.util.Constants;
 import org.apache.commons.configuration2.Configuration;
@@ -16,6 +16,7 @@ public class Extractors {
 
     static {
         map.put("threatSensor", new ThreatLevelExtractor());
+        map.put("bandwidthSensor", new BandwidthExtractor());
     }
 
     public static ValueExtractor getCurrentExtractor() {

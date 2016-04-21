@@ -1,9 +1,9 @@
-package bftsmart.demo.adapt;
+package bftsmart.demo.adapt.servers;
 
 
-import bftsmart.demo.adapt.extractor.Extractors;
-import bftsmart.demo.adapt.extractor.ValueExtractor;
-import bftsmart.demo.adapt.messages.SensorMessage;
+import bftsmart.demo.adapt.extractors.Extractors;
+import bftsmart.demo.adapt.extractors.ValueExtractor;
+import bftsmart.demo.adapt.messages.sensor.SensorMessage;
 import bftsmart.demo.adapt.policies.AdaptPolicy;
 import bftsmart.demo.adapt.policies.Policies;
 import bftsmart.demo.adapt.util.BftUtils;
@@ -98,12 +98,12 @@ public class AdaptServer extends DefaultRecoverable {
                     SensorMessage sensorMessage = valueExtractor.extract(sensorMessages);
                     AdaptPolicy policy = Policies.getCurrentPolicy();
                     if (policy != null) {
-                        policy.execute(sensorMessage);
+                        policy.execute(id, sensorMessage);
                     } else {
                         System.err.println("Error: Couldn't find policy.");
                     }
                 } else {
-                    System.err.println("Error: Couldn't find extractor");
+                    System.err.println("Error: Couldn't find extractors");
                 }
                 sensorMessages.clear();
             }
