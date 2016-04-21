@@ -1,6 +1,6 @@
-package bftsmart.demo.adapt.extractor;
+package bftsmart.demo.adapt.extractors;
 
-import bftsmart.demo.adapt.messages.ThreatLevelMessage;
+import bftsmart.demo.adapt.messages.sensor.ThreatLevelMessage;
 import bftsmart.demo.adapt.util.StreamUtils;
 
 import java.util.List;

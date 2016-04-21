@@ -1,10 +1,9 @@
-package bftsmart.demo.adapt.messages;
+package bftsmart.demo.adapt.messages.sensor;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ThreatLevelMessage implements SensorMessage, Serializable {
+public class ThreatLevelMessage implements SensorMessage {
     private List<ReplicaStatus> activeReplicas = new ArrayList<>();
     private List<ReplicaStatus> inactiveReplicas = new ArrayList<>();
     private int threatLevel;

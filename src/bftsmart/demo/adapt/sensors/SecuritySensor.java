@@ -1,7 +1,9 @@
-package bftsmart.demo.adapt;
+package bftsmart.demo.adapt.sensors;
 
-import bftsmart.demo.adapt.messages.SensorMessage;
-import bftsmart.demo.adapt.messages.ThreatLevelMessage;
+import bftsmart.demo.adapt.messages.sensor.SensorMessage;
+import bftsmart.demo.adapt.messages.sensor.ThreatLevelMessage;
+import bftsmart.demo.adapt.messages.sensor.ReplicaStatus;
+import bftsmart.demo.adapt.util.BftUtils;
 import bftsmart.demo.adapt.util.Constants;
 import bftsmart.demo.adapt.util.FileUtil;
 import bftsmart.demo.adapt.util.MessageSerializer;
@@ -22,14 +24,14 @@ public class SecuritySensor {
         //Runnable runnable = new Runnable() {
         //    @Override
           //  public void run() {
-                List<bftsmart.demo.adapt.messages.ReplicaStatus> activeReplicas = new ArrayList<>();
-                List<bftsmart.demo.adapt.messages.ReplicaStatus> inactiveReplicas = new ArrayList<>();
+                List<ReplicaStatus> activeReplicas = new ArrayList<>();
+                List<ReplicaStatus> inactiveReplicas = new ArrayList<>();
                 readStatusFile(Constants.HOSTS_STATUS_PATH, activeReplicas, inactiveReplicas);
                 int threatLevel = readThreatLevel(Constants.THREAT_LEVEL_PATH);
                 //threatLevel = (int) (Math.random() * 100);
                 ThreatLevelMessage msg = new ThreatLevelMessage(activeReplicas, inactiveReplicas, threatLevel);
                 System.out.println("Sending Message");
-                sendMessage(msg);
+                BftUtils.sendMessage(1001, Constants.ADAPT_HOME_FOLDER, msg);
                 //System.out.println(msg);
           //  }
         //};
@@ -40,15 +42,15 @@ public class SecuritySensor {
     }
 
     private static void readStatusFile(String filepath,
-                                List<bftsmart.demo.adapt.messages.ReplicaStatus> activeReplicas,
-                                List<bftsmart.demo.adapt.messages.ReplicaStatus> inactiveReplicas) {
+                                List<ReplicaStatus> activeReplicas,
+                                List<ReplicaStatus> inactiveReplicas) {
         FileUtil.readFileLines(filepath).stream().forEach(l -> {
             String[] splits = l.split(" ");
             if (splits.length >= 4) {
                 if (splits[3].equals("1")) {
-                    activeReplicas.add(new bftsmart.demo.adapt.messages.ReplicaStatus(splits[0], splits[1], splits[2], true));
+                    activeReplicas.add(new ReplicaStatus(splits[0], splits[1], splits[2], true));
                 } else {
-                    inactiveReplicas.add(new bftsmart.demo.adapt.messages.ReplicaStatus(splits[0], splits[1], splits[2], false));
+                    inactiveReplicas.add(new ReplicaStatus(splits[0], splits[1], splits[2], false));
                 }
 
             }
@@ -58,20 +60,5 @@ public class SecuritySensor {
     private static int readThreatLevel(String filepath) {
         List<String> lines = FileUtil.readFileLines(filepath);
         return lines.isEmpty() ? -1 : Integer.parseInt(lines.get(0));
-    }
-
-    private static void sendMessage(SensorMessage sensorMessage) {
-        ServiceProxy serviceProxy = null;
-        try {
-            serviceProxy = new ServiceProxy(1001, Constants.ADAPT_HOME_FOLDER);
-            byte[] reply = serviceProxy.invokeOrdered(MessageSerializer.serialize(sensorMessage));
-            System.out.println("Reply: " +  reply);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (serviceProxy != null) {
-                serviceProxy.close();
-            }
-        }
     }
 }
