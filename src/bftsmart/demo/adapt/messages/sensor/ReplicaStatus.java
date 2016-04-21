@@ -1,4 +1,4 @@
-package bftsmart.demo.adapt.messages;
+package bftsmart.demo.adapt.messages.sensor;
 
 import java.io.Serializable;
 

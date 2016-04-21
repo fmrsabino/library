@@ -1,7 +1,7 @@
 package bftsmart.demo.adapt.policies;
 
-import bftsmart.demo.adapt.messages.SensorMessage;
+import bftsmart.demo.adapt.messages.sensor.SensorMessage;
 
 public interface AdaptPolicy<T extends SensorMessage> {
-    void execute(T message);
+    void execute(int executorId, T message);
 }
