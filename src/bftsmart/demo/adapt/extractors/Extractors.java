@@ -17,6 +17,7 @@ public class Extractors {
     static {
         map.put("threatSensor", new ThreatLevelExtractor());
         map.put("bandwidthSensor", new BandwidthExtractor());
+        map.put("signaturesSensor", new UseSignaturesExtractor());
     }
 
     public static ValueExtractor getCurrentExtractor() {

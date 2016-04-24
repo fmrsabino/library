@@ -2,6 +2,7 @@ package bftsmart.demo.adapt.servers;
 
 import bftsmart.demo.adapt.messages.adapt.AdaptMessage;
 import bftsmart.demo.adapt.messages.adapt.ChangeTimeoutMessage;
+import bftsmart.demo.adapt.messages.adapt.ChangeUseSignaturesMessage;
 import bftsmart.demo.adapt.util.MessageMatcher;
 import bftsmart.demo.adapt.util.MessageSerializer;
 import bftsmart.tom.MessageContext;
@@ -13,6 +14,7 @@ import java.io.*;
 public class RealServer extends DefaultRecoverable {
     private ServiceReplica replica;
     private long currentTimeout;
+    private int useSignatures;
     private MessageMatcher<AdaptMessage> messageMatcher = new MessageMatcher<>(3);
 
     @Override
@@ -21,6 +23,7 @@ public class RealServer extends DefaultRecoverable {
             ByteArrayInputStream bis = new ByteArrayInputStream(state);
             ObjectInput in = new ObjectInputStream(bis);
             currentTimeout =  in.readLong();
+            useSignatures = in.readInt();
             in.close();
             bis.close();
         } catch (Exception e) {
@@ -35,6 +38,7 @@ public class RealServer extends DefaultRecoverable {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutput out = new ObjectOutputStream(bos);
             out.writeLong(currentTimeout);
+            out.writeInt(useSignatures);
             out.flush();
             bos.flush();
             out.close();
@@ -56,7 +60,6 @@ public class RealServer extends DefaultRecoverable {
             }
             else executeSingle(commands[i],null);
         }
-
         return replies;
     }
 
@@ -82,6 +85,12 @@ public class RealServer extends DefaultRecoverable {
             System.out.println("Received a ChangeTimeoutMessage");
             currentTimeout = timeoutMessage.getTimeoutValue();
             replica.setRequestTimeout(currentTimeout);
+        } else if (message instanceof ChangeUseSignaturesMessage) {
+            ChangeUseSignaturesMessage signaturesMessage = (ChangeUseSignaturesMessage) message;
+            System.out.println("Received a ChangeUseSignaturesMessage");
+            useSignatures = signaturesMessage.getUseSignatures();
+            setUseSignatures(useSignatures);
+
         }
         return new byte[]{0};
     }

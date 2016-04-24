@@ -424,7 +424,12 @@ public class TOMConfiguration extends Configuration {
      * Indicates if signatures should be used (1) or not (0) to authenticate client requests
      */
     public int getUseSignatures() {
+        System.out.println("useSignatures=" + useSignatures);
         return useSignatures;
+    }
+
+    public void setUseSignatures(int useSignatures) {
+        this.useSignatures = useSignatures;
     }
 
     /**

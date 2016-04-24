@@ -63,6 +63,10 @@ public abstract class DefaultRecoverable implements Recoverable, BatchExecutable
         }
     }
 
+    protected void setUseSignatures(int useSignatures) {
+        config.setUseSignatures(useSignatures);
+    }
+
     @Override
     public byte[][] executeBatch(byte[][] commands, MessageContext[] msgCtxs) {
         return executeBatch(commands, msgCtxs, false);

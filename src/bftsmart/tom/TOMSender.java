@@ -15,17 +15,17 @@ limitations under the License.
 */
 package bftsmart.tom;
 
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import bftsmart.communication.client.CommunicationSystemClientSide;
 import bftsmart.communication.client.CommunicationSystemClientSideFactory;
 import bftsmart.communication.client.ReplyReceiver;
 import bftsmart.reconfiguration.ClientViewController;
 import bftsmart.tom.core.messages.TOMMessage;
 import bftsmart.tom.core.messages.TOMMessageType;
+
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This class is used to multicast messages to replicas and receive replies.
@@ -41,7 +41,6 @@ public abstract class TOMSender implements ReplyReceiver {
 	private int unorderedMessageSequence = 0; // sequence number for readonly messages
 	private CommunicationSystemClientSide cs; // Client side comunication system
 	private Lock lock = new ReentrantLock(); // lock to manage concurrent access to this object by other threads
-	private boolean useSignatures = false;
 	private AtomicInteger opCounter = new AtomicInteger(0);
 
 	/**
@@ -86,7 +85,6 @@ public abstract class TOMSender implements ReplyReceiver {
 		this.cs = CommunicationSystemClientSideFactory.getCommunicationSystemClientSide(clientId, this.viewController);
 		this.cs.setReplyReceiver(this); // This object itself shall be a reply receiver
 		this.me = this.viewController.getStaticConf().getProcessId();
-		this.useSignatures = this.viewController.getStaticConf().getUseSignatures()==1?true:false;
 		this.session = new Random().nextInt();
 	}
 	//******* EDUARDO END **************//
@@ -129,6 +127,7 @@ public abstract class TOMSender implements ReplyReceiver {
 	 * @param sm Message to be multicast
 	 */
 	public void TOMulticast(TOMMessage sm) {
+		boolean useSignatures = this.viewController.getStaticConf().getUseSignatures() == 1;
 		cs.send(useSignatures, this.viewController.getCurrentViewProcesses(), sm);
 	}
 
@@ -140,12 +139,14 @@ public abstract class TOMSender implements ReplyReceiver {
 	 * @param reqType TOM_NORMAL, TOM_READONLY or TOM_RECONFIGURATION
 	 */
 	public void TOMulticast(byte[] m, int reqId, TOMMessageType reqType) {
+		boolean useSignatures = this.viewController.getStaticConf().getUseSignatures() == 1;
 		cs.send(useSignatures, viewController.getCurrentViewProcesses(),
 				new TOMMessage(me, session, reqId, m, viewController.getCurrentViewId(),
 						reqType));
 	}
 
 	public void TOMulticast(byte[] m, int reqId, int operationId, TOMMessageType reqType) {
+		boolean useSignatures = this.viewController.getStaticConf().getUseSignatures() == 1;
 		cs.send(useSignatures, viewController.getCurrentViewProcesses(),
 				new TOMMessage(me, session, reqId, operationId, m, viewController.getCurrentViewId(),
 						reqType));
@@ -155,6 +156,7 @@ public abstract class TOMSender implements ReplyReceiver {
 		if(this.getViewManager().getStaticConf().isTheTTP()) {
 			type = TOMMessageType.ASK_STATUS;
 		}
+		boolean useSignatures = this.viewController.getStaticConf().getUseSignatures() == 1;
 		cs.send(useSignatures, targets,
 				new TOMMessage(me, session, reqId, m, viewController.getCurrentViewId(), type));
 	}
@@ -163,6 +165,7 @@ public abstract class TOMSender implements ReplyReceiver {
 		if(this.getViewManager().getStaticConf().isTheTTP()) {
 			type = TOMMessageType.ASK_STATUS;
 		}
+		boolean useSignatures = this.viewController.getStaticConf().getUseSignatures() == 1;
 		cs.send(useSignatures, targets,
 				new TOMMessage(me, session, reqId, operationId, m, viewController.getCurrentViewId(), type));
 	}
