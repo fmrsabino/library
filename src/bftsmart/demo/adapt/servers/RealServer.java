@@ -14,6 +14,7 @@ public class RealServer extends DefaultRecoverable {
     private ServiceReplica replica;
     private long currentTimeout;
     private MessageMatcher<AdaptMessage> messageMatcher = new MessageMatcher<>(3);
+    private int id = -1;
 
     @Override
     public void installSnapshot(byte[] state) {
@@ -96,6 +97,7 @@ public class RealServer extends DefaultRecoverable {
     }
 
     public RealServer(int id) {
+        this.id = id;
         replica = new ServiceReplica(id, this, this);
     }
 
