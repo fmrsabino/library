@@ -2,11 +2,11 @@ package bftsmart.demo.adapt.util;
 
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MessageMatcher<T> {
-    private final HashMap<Integer, List<T>> map = new HashMap<>();
+    private final ConcurrentHashMap<Integer, List<T>> map = new ConcurrentHashMap<>();
     private final int quorumSize;
 
     public MessageMatcher(int quorumSize) {
@@ -29,7 +29,6 @@ public class MessageMatcher<T> {
         } else {
             list = map.get(hash);
             list.add(t);
-
         }
         if (list.size() == quorumSize) {
             map.clear();

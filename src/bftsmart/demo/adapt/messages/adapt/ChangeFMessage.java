@@ -1,22 +1,18 @@
 package bftsmart.demo.adapt.messages.adapt;
 
 import bftsmart.demo.adapt.messages.sensor.ReplicaStatus;
-import bftsmart.demo.adapt.messages.sensor.SensorMessage;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReconfigMessage implements SensorMessage {
+public class ChangeFMessage implements AdaptMessage {
     public static final int ADD_REPLICAS = 0;
     public static final int REMOVE_REPLICAS = 1;
 
-    private int command = -1;
-    private List<ReplicaStatus> replicas = new ArrayList<>();
+    private final int command;
+    private final List<ReplicaStatus> replicas;
 
-    public ReconfigMessage() {}
-
-    public ReconfigMessage(int command, List<ReplicaStatus> replicas) {
+    public ChangeFMessage(int command, List<ReplicaStatus> replicas) {
         this.command = command;
         this.replicas = replicas;
     }

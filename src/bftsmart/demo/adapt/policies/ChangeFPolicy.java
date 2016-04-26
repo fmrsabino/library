@@ -1,9 +1,13 @@
 package bftsmart.demo.adapt.policies;
 
+import bftsmart.demo.adapt.TTP.TTPClient;
+import bftsmart.demo.adapt.messages.adapt.ChangeFMessage;
 import bftsmart.demo.adapt.messages.sensor.ReplicaStatus;
 import bftsmart.demo.adapt.messages.sensor.ThreatLevelMessage;
 import bftsmart.demo.adapt.util.BftUtils;
-import bftsmart.reconfiguration.VMServices;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ChangeFPolicy implements AdaptPolicy<ThreatLevelMessage> {
     @Override
@@ -11,25 +15,21 @@ public class ChangeFPolicy implements AdaptPolicy<ThreatLevelMessage> {
         int threatLevel = message.getThreatLevel();
         int f = BftUtils.getF(message.getActiveReplicas().size());
         if (threatLevel == 0 && f == 2) { //remove replicas
+            List<ReplicaStatus> replicasToRemove = new ArrayList<>();
             for (int i = 0; i < 3; i++) {
-                ReplicaStatus replica = message.getActiveReplicas().get(message.getActiveReplicas().size() - 1 - i);
-                try {
-                    VMServices.main(new String[]{replica.getSmartId()});
-                    Thread.sleep(3000);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                replicasToRemove.add(message.getActiveReplicas().get(message.getActiveReplicas().size() - 1 - i));
             }
+            ChangeFMessage changeFMessage = new ChangeFMessage(ChangeFMessage.REMOVE_REPLICAS, replicasToRemove);
+            TTPClient.sendMessage(changeFMessage);
+            //BftUtils.sendMessage(executorId, "", changeFMessage);
         } else if (threatLevel == 1 && f == 1){ //add replicas
+            List<ReplicaStatus> replicasToAdd = new ArrayList<>();
             for (int i = 0; i < 3; i++) {
-                ReplicaStatus replica = message.getInactiveReplicas().get(i);
-                try {
-                    VMServices.main(new String[]{replica.getSmartId(), replica.getIp(), replica.getPort()});
-                    Thread.sleep(3000);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                replicasToAdd.add(message.getInactiveReplicas().get(i));
             }
+            ChangeFMessage changeFMessage = new ChangeFMessage(ChangeFMessage.ADD_REPLICAS, replicasToAdd);
+            TTPClient.sendMessage(changeFMessage);
+            //BftUtils.sendMessage(executorId, "", changeFMessage);
         }
     }
 }
