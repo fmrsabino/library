@@ -8,6 +8,6 @@ public class ChangeTimeoutPolicy implements AdaptPolicy<BandwidthMessage> {
     @Override
     public void execute(int executorId, BandwidthMessage message) {
         ChangeTimeoutMessage msg = new ChangeTimeoutMessage(message.getBandwidth()*1000);
-        BftUtils.sendMessage(executorId, "", msg);
+        BftUtils.sendMessage(executorId, "", msg, true);
     }
 }

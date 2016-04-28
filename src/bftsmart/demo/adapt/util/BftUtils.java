@@ -11,12 +11,14 @@ public class BftUtils {
         return (n - 1) / 3;
     }
 
-    public static byte[] sendMessage(int clientId, String homeFolder, Object message) {
+    public static byte[] sendMessage(int clientId, String homeFolder, Object message, boolean ordered) {
         ServiceProxy serviceProxy = null;
         byte[] reply = null;
         try {
             serviceProxy = new ServiceProxy(clientId, homeFolder);
-            reply = serviceProxy.invokeOrdered(MessageSerializer.serialize(message));
+            reply = ordered ?
+                    serviceProxy.invokeOrdered(MessageSerializer.serialize(message)) :
+                    serviceProxy.invokeUnordered(MessageSerializer.serialize(message));
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
