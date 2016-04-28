@@ -31,7 +31,7 @@ public class SecuritySensor {
                 //threatLevel = (int) (Math.random() * 100);
                 ThreatLevelMessage msg = new ThreatLevelMessage(activeReplicas, inactiveReplicas, threatLevel);
                 System.out.println("Sending Message");
-                BftUtils.sendMessage(1001, Constants.ADAPT_HOME_FOLDER, msg);
+                BftUtils.sendMessage(1001, Constants.ADAPT_HOME_FOLDER, msg, true);
                 //System.out.println(msg);
           //  }
         //};

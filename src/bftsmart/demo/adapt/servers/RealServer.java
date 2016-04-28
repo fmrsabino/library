@@ -2,6 +2,7 @@ package bftsmart.demo.adapt.servers;
 
 import bftsmart.demo.adapt.messages.adapt.AdaptMessage;
 import bftsmart.demo.adapt.messages.adapt.ChangeTimeoutMessage;
+import bftsmart.demo.adapt.messages.sensor.PingMessage;
 import bftsmart.demo.adapt.util.MessageMatcher;
 import bftsmart.demo.adapt.util.MessageSerializer;
 import bftsmart.tom.MessageContext;
@@ -9,6 +10,7 @@ import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 
 import java.io.*;
+import java.net.Socket;
 
 public class RealServer extends DefaultRecoverable {
     private ServiceReplica replica;
@@ -93,7 +95,31 @@ public class RealServer extends DefaultRecoverable {
 
     @Override
     public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
+        try {
+            new SensorReplier(MessageSerializer.deserialize(command)).start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return new byte[]{0};
+    }
+
+    private class SensorReplier extends Thread {
+        private final PingMessage pingMessage;
+
+        public SensorReplier(PingMessage pingMessage) {
+            this.pingMessage = pingMessage;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Socket socket = new Socket(pingMessage.getIp(), pingMessage.getPort());
+                OutputStream os = socket.getOutputStream();
+                os.write(id);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public RealServer(int id) {
