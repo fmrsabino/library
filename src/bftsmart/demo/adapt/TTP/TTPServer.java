@@ -49,7 +49,7 @@ public class TTPServer extends ChannelInboundHandlerAdapter implements MessageLi
             System.out.println("ADDING REPLICAS");
             for (ReplicaStatus r : message.getReplicas()) {
                 try {
-                    VMServices.main(new String[] {r.getSmartId(), r.getIp(), r.getPort()});
+                    VMServices.main(new String[] {r.getSmartId()+"", r.getIp(), r.getPort()});
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -59,7 +59,7 @@ public class TTPServer extends ChannelInboundHandlerAdapter implements MessageLi
             System.out.println("REMOVING REPLICAS");
             for (ReplicaStatus r : message.getReplicas()) {
                 try {
-                    VMServices.main(new String[] {r.getSmartId()});
+                    VMServices.main(new String[] {r.getSmartId()+""});
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();

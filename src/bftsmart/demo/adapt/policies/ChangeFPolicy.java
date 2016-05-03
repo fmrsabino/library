@@ -7,6 +7,7 @@ import bftsmart.demo.adapt.messages.sensor.ThreatLevelMessage;
 import bftsmart.demo.adapt.util.BftUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ChangeFPolicy implements AdaptPolicy<ThreatLevelMessage> {
@@ -14,6 +15,7 @@ public class ChangeFPolicy implements AdaptPolicy<ThreatLevelMessage> {
     public void execute(int executorId, ThreatLevelMessage message) {
         int threatLevel = message.getThreatLevel();
         int f = BftUtils.getF(message.getActiveReplicas().size());
+        Collections.sort(message.getActiveReplicas(), (r1, r2) -> (r1.getSmartId() - r2.getSmartId()));
         if (threatLevel == 0 && f == 2) { //remove replicas
             List<ReplicaStatus> replicasToRemove = new ArrayList<>();
             for (int i = 0; i < 3; i++) {

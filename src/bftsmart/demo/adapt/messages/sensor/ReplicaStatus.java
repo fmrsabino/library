@@ -3,28 +3,27 @@ package bftsmart.demo.adapt.messages.sensor;
 import java.io.Serializable;
 
 public class ReplicaStatus implements Serializable {
-    private String smartId;
+    private int smartId;
     private String ip;
     private String port;
     private boolean active;
 
-    public ReplicaStatus(String smartId, String ip, String port, boolean active) {
+    public ReplicaStatus(int smartId, String ip, String port) {
         this.smartId = smartId;
         this.ip = ip;
         this.port = port;
-        this.active = active;
     }
 
     @Override
     public int hashCode() {
         if (active) {
-            return smartId.hashCode() + ip.hashCode() + port.hashCode() + 1;
+            return smartId + ip.hashCode() + port.hashCode() + 1;
         } else {
-            return smartId.hashCode() + ip.hashCode() + port.hashCode();
+            return smartId + ip.hashCode() + port.hashCode();
         }
     }
 
-    public String getSmartId() {
+    public int getSmartId() {
         return smartId;
     }
 
@@ -34,14 +33,6 @@ public class ReplicaStatus implements Serializable {
 
     public String getPort() {
         return port;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
     }
 
     @Override
