@@ -8,8 +8,6 @@ public class ThreatLevelMessage implements SensorMessage {
     private List<ReplicaStatus> inactiveReplicas = new ArrayList<>();
     private int threatLevel;
 
-    public ThreatLevelMessage() {}
-
     public ThreatLevelMessage(List<ReplicaStatus> activeReplicas, List<ReplicaStatus> inactiveReplicas, int threatLevel) {
         this.activeReplicas = activeReplicas;
         this.inactiveReplicas = inactiveReplicas;

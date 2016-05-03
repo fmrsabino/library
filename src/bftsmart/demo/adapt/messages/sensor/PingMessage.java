@@ -1,15 +1,17 @@
 package bftsmart.demo.adapt.messages.sensor;
 
+import java.net.InetAddress;
+
 public class PingMessage implements SensorMessage {
-    private String ip;
+    private InetAddress ip;
     private int port;
 
-    public PingMessage(String ip, int port) {
+    public PingMessage(InetAddress ip, int port) {
         this.ip = ip;
         this.port = port;
     }
 
-    public String getIp() {
+    public InetAddress getIp() {
         return ip;
     }
 
