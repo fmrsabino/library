@@ -1,5 +1,6 @@
 package bftsmart.demo.adapt.util;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -15,5 +16,9 @@ public class FileUtil {
             e.printStackTrace();
             return new ArrayList<>();
         }
+    }
+
+    public static String readAllBytes(String filePath) throws IOException {
+        return new String(Files.readAllBytes(Paths.get(filePath)));
     }
 }
