@@ -1,5 +1,6 @@
 .idea
 library.iml
+workspace/
 
 ### Gradle ###
 .gradle
