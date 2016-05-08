@@ -19,11 +19,9 @@ public class ChangeFMessage implements AdaptMessage {
 
     @Override
     public int hashCode() {
-        int hash = 1;
-        for (ReplicaStatus rs : replicas) {
-            hash += rs.hashCode();
-        }
-        return hash + command;
+        int result = command;
+        result = 31 * result + replicas.hashCode();
+        return result;
     }
 
     public int getCommand() {
@@ -32,5 +30,13 @@ public class ChangeFMessage implements AdaptMessage {
 
     public List<ReplicaStatus> getReplicas() {
         return replicas;
+    }
+
+    @Override
+    public String toString() {
+        return "ChangeFMessage{" +
+                "command=" + command +
+                ", replicas=" + replicas +
+                '}';
     }
 }

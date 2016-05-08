@@ -67,8 +67,10 @@ public class RealServer extends DefaultRecoverable {
     private byte[] executeSingle(byte[] command, MessageContext msgCtx) {
         try {
             AdaptMessage adaptMessage = MessageSerializer.deserialize(command);
+            System.out.println("Received an AdaptMessage: " + adaptMessage);
             AdaptMessage result = messageMatcher.insertMessage(adaptMessage);
             if (result != null) {
+                System.out.println("Quorum reached. Executing request.");
                 return executeAdaptRequest(adaptMessage);
             }
         } catch (ClassNotFoundException e) {
@@ -82,8 +84,8 @@ public class RealServer extends DefaultRecoverable {
 
     private byte[] executeAdaptRequest(AdaptMessage message) {
         if (message instanceof ChangeTimeoutMessage) {
+            System.out.println("Executing a ChangeTimeout request");
             ChangeTimeoutMessage timeoutMessage = (ChangeTimeoutMessage) message;
-            System.out.println("Received a ChangeTimeoutMessage");
             currentTimeout = timeoutMessage.getTimeoutValue();
             replica.setRequestTimeout(currentTimeout);
         }

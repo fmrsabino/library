@@ -13,6 +13,13 @@ public class ChangeTimeoutMessage implements AdaptMessage {
 
     @Override
     public int hashCode() {
-        return (int) timeoutValue;
+        return (int) (timeoutValue ^ (timeoutValue >>> 32));
+    }
+
+    @Override
+    public String toString() {
+        return "ChangeTimeoutMessage{" +
+                "timeoutValue=" + timeoutValue +
+                '}';
     }
 }

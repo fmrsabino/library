@@ -89,15 +89,19 @@ public class AdaptServer extends DefaultRecoverable {
     private byte[] executeSingle(byte[] command, MessageContext msgCtx) {
         try {
             SensorMessage sm = MessageSerializer.deserialize(command);
+            System.out.println("Received message:" + sm);
             if (sensorMessages.size() <= BftUtils.getQuorum(getSensorsF())) {
                 sensorMessages.add(sm);
             }
             if (sensorMessages.size() == BftUtils.getQuorum(getSensorsF())) {
+                System.out.println("Reached message quorum.");
                 ValueExtractor valueExtractor = Extractors.getCurrentExtractor();
                 if (valueExtractor != null) {
+                    System.out.println("Extracting value...");
                     SensorMessage sensorMessage = valueExtractor.extract(sensorMessages);
                     AdaptPolicy policy = Policies.getCurrentPolicy();
                     if (policy != null) {
+                        System.out.println("Executing policy");
                         policy.execute(id, sensorMessage);
                     } else {
                         System.err.println("Error: Couldn't find policy.");

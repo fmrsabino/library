@@ -10,4 +10,16 @@ public class BandwidthMessage implements SensorMessage {
     public int getBandwidth() {
         return bandwidth;
     }
+
+    @Override
+    public int hashCode() {
+        return bandwidth;
+    }
+
+    @Override
+    public String toString() {
+        return "BandwidthMessage{" +
+                "bandwidth=" + bandwidth +
+                '}';
+    }
 }

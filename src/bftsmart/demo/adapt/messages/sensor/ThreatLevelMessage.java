@@ -28,27 +28,18 @@ public class ThreatLevelMessage implements SensorMessage {
 
     @Override
     public int hashCode() {
-        int hash = 1;
-        for (ReplicaStatus rs : activeReplicas) {
-            hash += rs.hashCode();
-        }
-        for (ReplicaStatus rs : inactiveReplicas) {
-            hash += rs.hashCode();
-        }
-        return hash + threatLevel;
+        int result = activeReplicas.hashCode();
+        result = 31 * result + inactiveReplicas.hashCode();
+        result = 31 * result + threatLevel;
+        return result;
     }
 
     @Override
     public String toString() {
-        String result = "Active Replicas:\n";
-        for (ReplicaStatus rs : activeReplicas) {
-            result += rs + "\n";
-        }
-        result += "\nInactive Replicas:\n";
-        for (ReplicaStatus rs : inactiveReplicas) {
-            result += rs + "\n";
-        }
-        result += "\n" + "Threat Level = " + threatLevel + "\n";
-        return result;
+        return "ThreatLevelMessage{" +
+                "activeReplicas=" + activeReplicas +
+                ", inactiveReplicas=" + inactiveReplicas +
+                ", threatLevel=" + threatLevel +
+                '}';
     }
 }
