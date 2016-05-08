@@ -6,7 +6,6 @@ public class ReplicaStatus implements Serializable {
     private int smartId;
     private String ip;
     private String port;
-    private boolean active;
 
     public ReplicaStatus(int smartId, String ip, String port) {
         this.smartId = smartId;
@@ -16,11 +15,10 @@ public class ReplicaStatus implements Serializable {
 
     @Override
     public int hashCode() {
-        if (active) {
-            return smartId + ip.hashCode() + port.hashCode() + 1;
-        } else {
-            return smartId + ip.hashCode() + port.hashCode();
-        }
+        int result = smartId;
+        result = 31 * result + ip.hashCode();
+        result = 31 * result + port.hashCode();
+        return result;
     }
 
     public int getSmartId() {
@@ -37,6 +35,10 @@ public class ReplicaStatus implements Serializable {
 
     @Override
     public String toString() {
-        return smartId + " " + ip + " " + port;
+        return "ReplicaStatus{" +
+                "smartId=" + smartId +
+                ", ip='" + ip + '\'' +
+                ", port='" + port + '\'' +
+                '}';
     }
 }
