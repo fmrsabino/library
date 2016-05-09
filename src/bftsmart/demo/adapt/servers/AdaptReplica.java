@@ -9,6 +9,7 @@ import bftsmart.demo.adapt.policies.Policies;
 import bftsmart.demo.adapt.util.BftUtils;
 import bftsmart.demo.adapt.util.Constants;
 import bftsmart.demo.adapt.util.MessageSerializer;
+import bftsmart.demo.adapt.util.Register;
 import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
@@ -17,28 +18,29 @@ import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
-public class AdaptServer extends DefaultRecoverable {
-    public final static Configurations configurations = new Configurations();
-    private int internalState = 0;
+public class AdaptReplica extends DefaultRecoverable {
+    private final Configurations configurations = new Configurations();
     private ServiceReplica replica;
     private int id;
 
-    private List<SensorMessage> sensorMessages = new ArrayList<>();
+    private Map<SensorMessage.Type, Long> currentExecutions = new TreeMap<>();
+    private Register register;
 
-    public AdaptServer(int id) {
+    public AdaptReplica(int id) {
         this.id = id;
+        register = new Register(getSensorsQuorum());
         replica = new ServiceReplica(id, Constants.ADAPT_HOME_FOLDER, this, this, null);
     }
 
     public static void main(String[] args) {
         if (args.length < 1) {
-            System.out.println("Use: java AdaptServer <processId>");
+            System.out.println("Use: java AdaptReplica <processId>");
             System.exit(-1);
         }
-        new AdaptServer(Integer.parseInt(args[0]));
+        new AdaptReplica(Integer.parseInt(args[0]));
     }
 
     @Override
@@ -47,7 +49,8 @@ public class AdaptServer extends DefaultRecoverable {
             //System.out.println("setState called");
             ByteArrayInputStream bis = new ByteArrayInputStream(state);
             ObjectInput in = new ObjectInputStream(bis);
-            internalState =  in.readInt();
+            currentExecutions =  (Map<SensorMessage.Type, Long>) in.readObject();
+            register = (Register) in.readObject();
             in.close();
             bis.close();
         } catch (Exception e) {
@@ -62,7 +65,8 @@ public class AdaptServer extends DefaultRecoverable {
             //System.out.println("getState called");
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutput out = new ObjectOutputStream(bos);
-            out.writeInt(internalState);
+            out.writeObject(currentExecutions);
+            out.writeObject(register);
             out.flush();
             bos.flush();
             out.close();
@@ -90,26 +94,17 @@ public class AdaptServer extends DefaultRecoverable {
         try {
             SensorMessage sm = MessageSerializer.deserialize(command);
             System.out.println("Received message:" + sm);
-            if (sensorMessages.size() <= BftUtils.getQuorum(getSensorsF())) {
-                sensorMessages.add(sm);
+            Long curr = currentExecutions.get(sm.getType());
+            if (curr == null) {
+                curr = 0L;
+                currentExecutions.put(sm.getType(), curr);
             }
-            if (sensorMessages.size() == BftUtils.getQuorum(getSensorsF())) {
-                System.out.println("Reached message quorum.");
-                ValueExtractor valueExtractor = Extractors.getCurrentExtractor();
-                if (valueExtractor != null) {
-                    System.out.println("Extracting value...");
-                    SensorMessage sensorMessage = valueExtractor.extract(sensorMessages);
-                    AdaptPolicy policy = Policies.getCurrentPolicy();
-                    if (policy != null) {
-                        System.out.println("Executing policy");
-                        policy.execute(id, sensorMessage);
-                    } else {
-                        System.err.println("Error: Couldn't find policy.");
-                    }
-                } else {
-                    System.err.println("Error: Couldn't find extractors");
-                }
-                sensorMessages.clear();
+            if (sm.getSequenceNumber() < curr) {
+                System.out.println("Sequence number of message already executed. Discarding...");
+                return new byte[]{0};
+            }
+            if (register.store(sm)) {
+                executePolicy(sm.getType(), curr);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -117,11 +112,34 @@ public class AdaptServer extends DefaultRecoverable {
         return new byte[] {0};
     }
 
-    private int getSensorsF() {
+    private void executePolicy(SensorMessage.Type type, long currentExecution) {
+        System.out.println(String.format("[T%d] Preparing to execute policy for %s", currentExecution, type.name()));
+        ValueExtractor valueExtractor = Extractors.getCurrentExtractor();
+        if (valueExtractor != null) {
+            SensorMessage result = register.extract(type, currentExecution, valueExtractor);
+            if (result == null) {
+                System.out.println(String.format("[T%d] Don't have needed quorum for %s", currentExecution, type.name()));
+                return;
+            }
+            AdaptPolicy policy = Policies.getCurrentPolicy();
+            if (policy != null) {
+                System.out.println(String.format("[T%d] Executing policy with message %s", currentExecution, result));
+                policy.execute(id, result);
+                currentExecutions.put(type, currentExecution + 1);
+                executePolicy(type, currentExecution + 1); //try to execute next sequence (we may already have the needed messages)
+            } else {
+                System.out.println("[Error] Couldn't find policy!");
+            }
+        } else {
+            System.out.println("[Error] Couldn't find value extractor!");
+        }
+    }
+
+    private int getSensorsQuorum() {
         try {
             Configuration config = configurations.properties(new File(Constants.ADAPT_CONFIG_PATH));
-            int n = config.getInt(Constants.N_SENSORS_KEY);
-            return BftUtils.getF(n);
+            int f = BftUtils.getF(config.getInt(Constants.N_SENSORS_KEY));
+            return BftUtils.getQuorum(f);
         } catch (ConfigurationException e) {
             e.printStackTrace();
         }

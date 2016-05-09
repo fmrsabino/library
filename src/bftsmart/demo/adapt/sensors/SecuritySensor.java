@@ -84,7 +84,7 @@ public class SecuritySensor {
                 }
                 System.out.println("Reached timeout.\nActiveReplicas="+activeReplicas+"\nInactiveReplicas="+inactiveReplicas);
                 //send message to adapt
-                ThreatLevelMessage msg = new ThreatLevelMessage(activeReplicas, inactiveReplicas, readThreatLevel(Constants.THREAT_LEVEL_PATH));
+                ThreatLevelMessage msg = new ThreatLevelMessage(0, 0, 0, activeReplicas, inactiveReplicas, readThreatLevel(Constants.THREAT_LEVEL_PATH));
                 BftUtils.sendMessage(1001, Constants.ADAPT_HOME_FOLDER, msg, true);
             } catch (IOException e) {
                 e.printStackTrace();

@@ -10,10 +10,9 @@ import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 
 import java.io.*;
-import java.net.InetAddress;
 import java.net.Socket;
 
-public class RealServer extends DefaultRecoverable {
+public class RealReplica extends DefaultRecoverable {
     private ServiceReplica replica;
     private long currentTimeout;
     private MessageMatcher<AdaptMessage> messageMatcher = new MessageMatcher<>(3);
@@ -125,16 +124,16 @@ public class RealServer extends DefaultRecoverable {
         }
     }
 
-    public RealServer(int id) {
+    public RealReplica(int id) {
         this.id = id;
         replica = new ServiceReplica(id, this, this);
     }
 
     public static void main(String[] args){
         if(args.length < 1) {
-            System.out.println("Use: java RealServer <processId>");
+            System.out.println("Use: java RealReplica <processId>");
             System.exit(-1);
         }
-        new RealServer(Integer.parseInt(args[0]));
+        new RealReplica(Integer.parseInt(args[0]));
     }
 }

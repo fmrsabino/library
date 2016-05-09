@@ -73,7 +73,8 @@ public class SecurityUtils {
         try {
             PrivateKey privateKey = getPrivateKey("rsa/privatekey0", "RSA");
             PublicKey publicKey = getPublicKey("rsa/publickey0", "RSA");
-            MessageWithDigest<BandwidthMessage> msg = new MessageWithDigest<>(new BandwidthMessage(100), privateKey);
+            BandwidthMessage bandwidthMessage = new BandwidthMessage(0, 0, 100);
+            MessageWithDigest<BandwidthMessage> msg = new MessageWithDigest<>(bandwidthMessage, privateKey);
             if (msg.isValid(publicKey)) {
                 System.out.println("Message is VALID! Value is: " + msg.getContent().getBandwidth());
             } else {
