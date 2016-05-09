@@ -1,6 +1,7 @@
 .idea
 library.iml
 workspace/
+.DS_STORE
 
 ### Gradle ###
 .gradle
