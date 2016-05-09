@@ -1,8 +1,9 @@
 package bftsmart.demo.adapt.messages.sensor;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 
-public class PingMessage implements SensorMessage {
+public class PingMessage implements Serializable {
     private InetAddress ip;
     private int port;
 

@@ -3,12 +3,15 @@ package bftsmart.demo.adapt.messages.sensor;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ThreatLevelMessage implements SensorMessage {
+public class ThreatLevelMessage extends SensorMessage {
     private List<ReplicaStatus> activeReplicas = new ArrayList<>();
     private List<ReplicaStatus> inactiveReplicas = new ArrayList<>();
     private int threatLevel;
 
-    public ThreatLevelMessage(List<ReplicaStatus> activeReplicas, List<ReplicaStatus> inactiveReplicas, int threatLevel) {
+    public ThreatLevelMessage(int replica, int sensor, long sequenceNumber,
+                              List<ReplicaStatus> activeReplicas, List<ReplicaStatus> inactiveReplicas,
+                              int threatLevel) {
+        super(sensor, Type.THREAT, sequenceNumber);
         this.activeReplicas = activeReplicas;
         this.inactiveReplicas = inactiveReplicas;
         this.threatLevel = threatLevel;
