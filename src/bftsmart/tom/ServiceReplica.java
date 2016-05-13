@@ -268,6 +268,9 @@ public class ServiceReplica {
         List<MessageContext> msgCtxts = new ArrayList<>();
         boolean noop = true;
 
+        boolean updates = false;
+        List<TOMMessage> noUpdatesBatch = new ArrayList<>();
+
         for (TOMMessage[] requestsFromConsensus : requests) {
 
             TOMMessage firstRequest = requestsFromConsensus[0];
@@ -342,7 +345,10 @@ public class ServiceReplica {
                             throw new UnsupportedOperationException("Interface not existent");
                         }
                     } else if (request.getReqType() == TOMMessageType.RECONFIG) {
-                        SVController.enqueueUpdate(request);
+                        updates = false;
+                        noUpdatesBatch.add(request);
+                        //if (false)
+                        //SVController.enqueueUpdate(request);
                     } else {
                         throw new RuntimeException("Should never reach here!");
                     }
@@ -397,6 +403,18 @@ public class ServiceReplica {
             }
             
             consensusCount++;
+        }
+
+        if (!updates) {
+            System.out.println("NO UPDATES!!!!!!!!");
+            for (TOMMessage m : noUpdatesBatch) {
+                m.reply = new TOMMessage(id, m.getSession(), m.getSequence(), new byte[] {0}, SVController.getCurrentViewId());
+                tomLayer.getCommunication().send(new int[]{m.getSender()},
+                        new TOMMessage(SVController.getStaticConf().getProcessId(),
+                                m.getSession(), m.getSequence(), new byte[] {0},
+                                SVController.getCurrentViewId(), TOMMessageType.RECONFIG));
+                System.out.println("Sending reply");
+            }
         }
 
         if (executor instanceof BatchExecutable && numRequests > 0) {

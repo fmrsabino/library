@@ -118,7 +118,7 @@ public class ServerViewController extends ViewController {
                             if(id != request.getSender()){
                                 add = false;
                             }
-                        }else{
+                        } else {
                             add = false;
                         }
                     } else if (key == REMOVE_SERVER) {

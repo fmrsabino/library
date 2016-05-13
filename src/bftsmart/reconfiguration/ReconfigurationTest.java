@@ -26,7 +26,7 @@ public class ReconfigurationTest {
     public ReconfigurationTest() {
     }
 
-    public void run(int id){
+    public void run(){
        /* ServiceProxy proxy = new ServiceProxy(id);
         
         ReconfigureRequest request = new ReconfigureRequest(id);
@@ -38,26 +38,26 @@ public class ReconfigurationTest {
         
         ReconfigureReply r = (ReconfigureReply)TOMUtil.getObject(reply);*/
         
-        Reconfiguration rec = new Reconfiguration(id);
+        Reconfiguration rec = new Reconfiguration(1001);
         
         //rec.setReconfiguration(ReconfigurationManager.CHANGE_F,"1");
-        rec.setF(2);
-        
+        //rec.setF(2);
+        rec.addServer(4, "127.0.0.1", 11040);
+        rec.connect();
         ReconfigureReply r = rec.execute();
-        
-        
-        
-        View v = r.getView();
-        
-        System.out.println("New view f: "+v.getF());
-        
+        System.out.println(r);
+        if (r != null) {
+            View v = r.getView();
+            System.out.println("New view f: "+v.getF());
+        }
+
         rec.close();
    }
     
     
     
     public static void main(String[] args){
-        new ReconfigurationTest().run(Integer.parseInt(args[0]));
+        new ReconfigurationTest().run();
     }
     
     

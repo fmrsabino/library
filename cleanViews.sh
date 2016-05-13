@@ -1,3 +1,3 @@
 workspaceDir=workspace
 
-find ./"$workspaceDir" -name \currentView -type f -delete
+find . -name \currentView -type f -delete

@@ -107,6 +107,9 @@ public class ViewManager {
     public void executeUpdates() {
         connect();
         ReconfigureReply r = rec.execute();
+        if (r == null) {
+            System.out.println("No reconfiguration to be done!!");
+        }
         View v = r.getView();
         System.out.println("New view f: " + v.getF());
 
