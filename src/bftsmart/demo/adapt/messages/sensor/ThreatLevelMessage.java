@@ -8,7 +8,7 @@ public class ThreatLevelMessage extends SensorMessage {
     private List<ReplicaStatus> inactiveReplicas = new ArrayList<>();
     private int threatLevel;
 
-    public ThreatLevelMessage(int replica, int sensor, long sequenceNumber,
+    public ThreatLevelMessage(int sensor, long sequenceNumber,
                               List<ReplicaStatus> activeReplicas, List<ReplicaStatus> inactiveReplicas,
                               int threatLevel) {
         super(sensor, Type.THREAT, sequenceNumber);
@@ -44,5 +44,19 @@ public class ThreatLevelMessage extends SensorMessage {
                 ", inactiveReplicas=" + inactiveReplicas +
                 ", threatLevel=" + threatLevel +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+
+        ThreatLevelMessage that = (ThreatLevelMessage) o;
+
+        if (threatLevel != that.threatLevel) return false;
+        if (!activeReplicas.equals(that.activeReplicas)) return false;
+        return inactiveReplicas.equals(that.inactiveReplicas);
+
     }
 }

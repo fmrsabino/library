@@ -22,4 +22,9 @@ public class ChangeTimeoutMessage implements AdaptMessage {
                 "timeoutValue=" + timeoutValue +
                 '}';
     }
+
+    @Override
+    public void execute() {
+
+    }
 }

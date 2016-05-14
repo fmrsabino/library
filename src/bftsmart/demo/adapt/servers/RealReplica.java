@@ -1,9 +1,6 @@
 package bftsmart.demo.adapt.servers;
 
-import bftsmart.demo.adapt.messages.adapt.AdaptMessage;
-import bftsmart.demo.adapt.messages.adapt.ChangeTimeoutMessage;
 import bftsmart.demo.adapt.messages.sensor.PingMessage;
-import bftsmart.demo.adapt.util.MessageMatcher;
 import bftsmart.demo.adapt.util.MessageSerializer;
 import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceReplica;
@@ -15,8 +12,9 @@ import java.net.Socket;
 public class RealReplica extends DefaultRecoverable {
     private ServiceReplica replica;
     private long currentTimeout;
-    private MessageMatcher<AdaptMessage> messageMatcher = new MessageMatcher<>(3);
     private int id = -1;
+
+
 
     @Override
     public void installSnapshot(byte[] state) {
@@ -64,34 +62,6 @@ public class RealReplica extends DefaultRecoverable {
     }
 
     private byte[] executeSingle(byte[] command, MessageContext msgCtx) {
-        try {
-            AdaptMessage adaptMessage = MessageSerializer.deserialize(command);
-            System.out.println("Received an AdaptMessage: " + adaptMessage);
-            AdaptMessage result = messageMatcher.insertMessage(adaptMessage);
-            if (result != null) {
-                System.out.println("Quorum reached. Executing request.");
-                return executeAdaptRequest(adaptMessage);
-            }
-        } catch (ClassNotFoundException e) {
-            System.out.println("Message is not from Adapt System. It's a client request");
-            return executeClientRequest(command, msgCtx);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return new byte[]{0};
-    }
-
-    private byte[] executeAdaptRequest(AdaptMessage message) {
-        if (message instanceof ChangeTimeoutMessage) {
-            System.out.println("Executing a ChangeTimeout request");
-            ChangeTimeoutMessage timeoutMessage = (ChangeTimeoutMessage) message;
-            currentTimeout = timeoutMessage.getTimeoutValue();
-            replica.setRequestTimeout(currentTimeout);
-        }
-        return new byte[]{0};
-    }
-
-    private byte[] executeClientRequest(byte[] command, MessageContext msgCtx) {
         return new byte[]{0};
     }
 

@@ -3,6 +3,7 @@ package bftsmart.demo.adapt.servers;
 
 import bftsmart.demo.adapt.extractors.Extractors;
 import bftsmart.demo.adapt.extractors.ValueExtractor;
+import bftsmart.demo.adapt.messages.adapt.AdaptMessage;
 import bftsmart.demo.adapt.messages.sensor.SensorMessage;
 import bftsmart.demo.adapt.policies.AdaptPolicy;
 import bftsmart.demo.adapt.policies.Policies;
@@ -28,9 +29,11 @@ public class AdaptReplica extends DefaultRecoverable {
 
     private Map<SensorMessage.Type, Long> currentExecutions = new TreeMap<>();
     private Register register;
+    private ReconfigurationDaemon daemon;
 
     public AdaptReplica(int id) {
         this.id = id;
+        daemon = new ReconfigurationDaemon(id);
         register = new Register(getSensorsQuorum());
         replica = new ServiceReplica(id, Constants.ADAPT_HOME_FOLDER, this, this, null);
     }
@@ -135,6 +138,32 @@ public class AdaptReplica extends DefaultRecoverable {
         }
     }
 
+    /*private byte[] executeAdaptRequest(AdaptMessage message) {
+        if (message instanceof ChangeTimeoutMessage) {
+            System.out.println("Executing a ChangeTimeout request");
+            ChangeTimeoutMessage timeoutMessage = (ChangeTimeoutMessage) message;
+            currentTimeout = timeoutMessage.getTimeoutValue();
+            replica.setRequestTimeout(currentTimeout);
+        } else if (message instanceof ChangeFMessage) {
+            System.out.println("Executing a ChangeF request");
+            ChangeFMessage changeFMessage = (ChangeFMessage) message;
+            ReplicaStatus r = changeFMessage.getReplicas().get(0);
+            try {
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(10000*id);
+                        VMServices.main(new String[] {r.getSmartId()+"", r.getSmartId()+"", r.getPort()});
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return new byte[]{0};
+    }*/
+
     private int getSensorsQuorum() {
         try {
             Configuration config = configurations.properties(new File(Constants.ADAPT_CONFIG_PATH));
@@ -148,6 +177,13 @@ public class AdaptReplica extends DefaultRecoverable {
 
     @Override
     public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
-        return new byte[0];
+        try {
+            AdaptMessage msg = MessageSerializer.deserialize(command);
+            System.out.println("Received AdaptMessage");
+            daemon.storeMessage(msg);
+        } catch (ClassNotFoundException | IOException e) {
+            e.printStackTrace();
+        }
+        return new byte[] {0};
     }
 }

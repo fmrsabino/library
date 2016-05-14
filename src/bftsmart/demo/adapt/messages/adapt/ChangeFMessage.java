@@ -1,6 +1,7 @@
 package bftsmart.demo.adapt.messages.adapt;
 
 import bftsmart.demo.adapt.messages.sensor.ReplicaStatus;
+import bftsmart.reconfiguration.VMServices;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,5 +39,16 @@ public class ChangeFMessage implements AdaptMessage {
                 "command=" + command +
                 ", replicas=" + replicas +
                 '}';
+    }
+
+    @Override
+    public void execute() {
+        try {
+            VMServices.main(new String[] {"4", "127.0.0.1", "11040"});
+            VMServices.main(new String[] {"5", "127.0.0.1", "11050"});
+            VMServices.main(new String[] {"6", "127.0.0.1", "11060"});
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
