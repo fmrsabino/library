@@ -6,7 +6,8 @@ public class SensorMessage implements Serializable {
     public enum Type {
         CPU,
         BANDWIDTH,
-        THREAT
+        THREAT,
+        BATCH_SIZE
     }
 
     private final int sensor;

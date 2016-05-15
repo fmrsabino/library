@@ -17,6 +17,7 @@ public class Policies {
     static {
         map.put("changeF", new ChangeFPolicy());
         map.put("changeTimeout", new ChangeTimeoutPolicy());
+        map.put("changeBatchSize", new ChangeBatchSizePolicy());
     }
 
     public static AdaptPolicy getCurrentPolicy() {

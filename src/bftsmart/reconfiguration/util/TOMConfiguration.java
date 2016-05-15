@@ -388,6 +388,11 @@ public class TOMConfiguration extends Configuration {
         return maxBatchSize;
     }
 
+    public void setMaxBatchSize(int maxBatchSize) {
+        System.out.println(String.format("[RECONFIG] Changing batch size from %d to %d", this.maxBatchSize, maxBatchSize));
+        this.maxBatchSize = maxBatchSize;
+    }
+
     public boolean isShutdownHookEnabled() {
         return shutdownHookEnabled;
     }

@@ -35,6 +35,7 @@ public class ServerViewController extends ViewController {
     public static final int ADD_SERVER = 0;
     public static final int REMOVE_SERVER = 1;
     public static final int CHANGE_F = 2;
+    public static final int CHANGE_MAX_BATCH_SIZE = 3;
     
     private int quorumBFT; // ((n + f) / 2) replicas
     private int quorumCFT; // (n / 2) replicas
@@ -148,8 +149,7 @@ public class ServerViewController extends ViewController {
         int f = -1;
         
         List<String> jSetInfo = new LinkedList<>();
-        
-        
+
         for (int i = 0; i < updates.size(); i++) {
             ReconfigureRequest request = (ReconfigureRequest) TOMUtil.getObject(updates.get(i).getContent());
             Iterator<Integer> it = request.getProperties().keySet().iterator();
@@ -176,9 +176,16 @@ public class ServerViewController extends ViewController {
                     }
                 } else if (key == CHANGE_F) {
                     f = Integer.parseInt(value);
+                } else if (key == CHANGE_MAX_BATCH_SIZE) {
+                    int newBatchSize = Integer.parseInt(value);
+                    //change Max Batch Size
+                    if (newBatchSize >= 0 ) {
+                        getStaticConf().setMaxBatchSize(newBatchSize);
+                        return TOMUtil.getBytes(new ReconfigureReply(currentView, jSetInfo.toArray(new String[0]),
+                                cid, tomLayer.execManager.getCurrentLeader()));
+                    }
                 }
             }
-
         }
         //ret = reconfigure(updates.get(i).getContent());
         return reconfigure(jSetInfo, jSet, rSet, f, cid);
