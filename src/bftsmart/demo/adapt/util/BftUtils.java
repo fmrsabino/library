@@ -1,6 +1,11 @@
 package bftsmart.demo.adapt.util;
 
+import bftsmart.demo.adapt.messages.MessageWithDigest;
+import bftsmart.demo.adapt.messages.adapt.AdaptMessage;
 import bftsmart.tom.ServiceProxy;
+
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 
 public class BftUtils {
     public static int getQuorum(int f) {
@@ -27,5 +32,20 @@ public class BftUtils {
             }
         }
         return reply;
+    }
+
+    public static <T extends AdaptMessage> void sendToReconfiguration(String[] hosts, int[] ports, MessageWithDigest<T> msg) {
+        try {
+            if (hosts.length != ports.length) {
+                return;
+            }
+            for (int i = 0; i < hosts.length; i++) {
+                Socket socket = new Socket(hosts[i], ports[i]);
+                ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+                oos.writeObject(msg);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -3,7 +3,7 @@ package bftsmart.demo.adapt.messages.sensor;
 public class BandwidthMessage extends SensorMessage {
     private final int bandwidth;
 
-    public BandwidthMessage(int sensor, long sequenceNumber, int bandwidth) {
+    public BandwidthMessage(int sensor, int sequenceNumber, int bandwidth) {
         super(sensor, Type.BANDWIDTH, sequenceNumber);
         this.bandwidth = bandwidth;
     }

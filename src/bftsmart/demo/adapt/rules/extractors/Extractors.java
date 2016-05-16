@@ -1,4 +1,4 @@
-package bftsmart.demo.adapt.extractors;
+package bftsmart.demo.adapt.rules.extractors;
 
 import bftsmart.demo.adapt.messages.sensor.BandwidthMessage;
 import bftsmart.demo.adapt.messages.sensor.ThreatLevelMessage;

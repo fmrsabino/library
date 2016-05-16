@@ -1,9 +1,10 @@
 package bftsmart.demo.adapt.messages.adapt;
 
-public class ChangeTimeoutMessage implements AdaptMessage {
+public class ChangeTimeoutMessage extends AdaptMessage {
     private final long timeoutValue;
 
-    public ChangeTimeoutMessage(long timeoutValue) {
+    public ChangeTimeoutMessage(int seqN, int sender, long timeoutValue) {
+        super(seqN, sender);
         this.timeoutValue = timeoutValue;
     }
 

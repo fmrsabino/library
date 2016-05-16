@@ -4,17 +4,14 @@ import bftsmart.demo.adapt.messages.sensor.PingMessage;
 import bftsmart.demo.adapt.util.MessageSerializer;
 import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceReplica;
-import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 
 import java.io.*;
 import java.net.Socket;
 
-public class RealReplica extends DefaultRecoverable {
+public class RealReplica extends ReconfigurableReplica {
     private ServiceReplica replica;
     private long currentTimeout;
     private int id = -1;
-
-
 
     @Override
     public void installSnapshot(byte[] state) {
@@ -94,7 +91,8 @@ public class RealReplica extends DefaultRecoverable {
         }
     }
 
-    public RealReplica(int id) {
+    private RealReplica(int id) {
+        super("127.0.0.1", 11000 + (id * 10) + 5, 4);
         this.id = id;
         replica = new ServiceReplica(id, this, this);
     }

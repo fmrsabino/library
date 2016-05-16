@@ -1,4 +1,4 @@
-package bftsmart.demo.adapt.policies;
+package bftsmart.demo.adapt.rules.policies;
 
 import bftsmart.demo.adapt.util.Constants;
 import org.apache.commons.configuration2.Configuration;
@@ -15,9 +15,7 @@ public class Policies {
 
 
     static {
-        map.put("changeF", new ChangeFPolicy());
-        map.put("changeTimeout", new ChangeTimeoutPolicy());
-        map.put("changeBatchSize", new ChangeBatchSizePolicy());
+        map.put("policy1", new ExamplePolicy());
     }
 
     public static AdaptPolicy getCurrentPolicy() {

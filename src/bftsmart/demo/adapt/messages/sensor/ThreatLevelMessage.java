@@ -8,7 +8,7 @@ public class ThreatLevelMessage extends SensorMessage {
     private List<ReplicaStatus> inactiveReplicas = new ArrayList<>();
     private int threatLevel;
 
-    public ThreatLevelMessage(int sensor, long sequenceNumber,
+    public ThreatLevelMessage(int sensor, int sequenceNumber,
                               List<ReplicaStatus> activeReplicas, List<ReplicaStatus> inactiveReplicas,
                               int threatLevel) {
         super(sensor, Type.THREAT, sequenceNumber);

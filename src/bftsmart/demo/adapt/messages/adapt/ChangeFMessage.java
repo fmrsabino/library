@@ -7,22 +7,30 @@ import bftsmart.reconfiguration.VMServices;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChangeFMessage implements AdaptMessage {
+public class ChangeFMessage extends AdaptMessage {
     public static final int ADD_REPLICAS = 0;
     public static final int REMOVE_REPLICAS = 1;
 
     private final int command;
-    private final List<ReplicaStatus> replicas;
+    private final ReplicaStatus replica;
 
-    public ChangeFMessage(int command, List<ReplicaStatus> replicas) {
+    public ChangeFMessage(int seqN, int sender, int command, ReplicaStatus replica) {
+        super(seqN, sender);
         this.command = command;
-        this.replicas = replicas;
+        this.replica = replica;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        //A message with the same sequence number and sender is considered the same
+        return super.equals(o);
     }
 
     @Override
     public int hashCode() {
-        int result = command;
-        result = 31 * result + replicas.hashCode();
+        int result = super.hashCode();
+        result = 31 * result + command;
+        result = 31 * result + replica.hashCode();
         return result;
     }
 
@@ -30,29 +38,26 @@ public class ChangeFMessage implements AdaptMessage {
         return command;
     }
 
-    public List<ReplicaStatus> getReplicas() {
-        return replicas;
+    public ReplicaStatus getReplica() {
+        return replica;
     }
 
     @Override
     public String toString() {
         return "ChangeFMessage{" +
                 "command=" + command +
-                ", replicas=" + replicas +
+                ", replica=" + replica +
                 '}';
     }
 
     @Override
     public void execute() {
         try {
-            /*VMServices.main(new String[] {"4", "127.0.0.1", "11040"});
-            VMServices.main(new String[] {"5", "127.0.0.1", "11050"});
-            VMServices.main(new String[] {"6", "127.0.0.1", "11060"});
-            Reconfiguration reconfiguration = new Reconfiguration(7002);
-            reconfiguration.setMaxBatchSize(200);
-            reconfiguration.connect();
-            reconfiguration.execute();*/
-            VMServices.main(new String[]{});
+            if (command == ADD_REPLICAS) {
+                VMServices.main(new String[] {replica.getSmartId()+"", replica.getIp(), replica.getPort()});
+            } else if (command == REMOVE_REPLICAS) {
+                VMServices.main(new String[] {replica.getSmartId()+""});
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -12,9 +12,9 @@ public class SensorMessage implements Serializable {
 
     private final int sensor;
     private final Type type;
-    private final long sequenceNumber;
+    private final int sequenceNumber;
 
-    public SensorMessage(int sensor, Type type, long sequenceNumber) {
+    public SensorMessage(int sensor, Type type, int sequenceNumber) {
         this.sensor = sensor;
         this.type = type;
         this.sequenceNumber = sequenceNumber;
@@ -41,7 +41,7 @@ public class SensorMessage implements Serializable {
         return type;
     }
 
-    public long getSequenceNumber() {
+    public int getSequenceNumber() {
         return sequenceNumber;
     }
 }

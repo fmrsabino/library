@@ -9,7 +9,7 @@ public class WorkloadSizeMessage extends SensorMessage {
         HIGH
     }
 
-    public WorkloadSizeMessage(int sensor, Type type, long sequenceNumber, Size workload) {
+    public WorkloadSizeMessage(int sensor, Type type, int sequenceNumber, Size workload) {
         super(sensor, type, sequenceNumber);
         this.workload = workload;
     }

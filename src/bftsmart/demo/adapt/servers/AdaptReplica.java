@@ -1,16 +1,16 @@
 package bftsmart.demo.adapt.servers;
 
 
-import bftsmart.demo.adapt.extractors.Extractors;
-import bftsmart.demo.adapt.extractors.ValueExtractor;
 import bftsmart.demo.adapt.messages.adapt.AdaptMessage;
 import bftsmart.demo.adapt.messages.sensor.SensorMessage;
-import bftsmart.demo.adapt.policies.AdaptPolicy;
-import bftsmart.demo.adapt.policies.Policies;
+import bftsmart.demo.adapt.rules.checkers.ValueChecker;
+import bftsmart.demo.adapt.rules.checkers.ValueCheckers;
+import bftsmart.demo.adapt.rules.policies.AdaptPolicy;
+import bftsmart.demo.adapt.rules.policies.Policies;
 import bftsmart.demo.adapt.util.BftUtils;
 import bftsmart.demo.adapt.util.Constants;
 import bftsmart.demo.adapt.util.MessageSerializer;
-import bftsmart.demo.adapt.util.Register;
+import bftsmart.demo.adapt.util.Registry;
 import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
@@ -19,22 +19,17 @@ import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 
 import java.io.*;
-import java.util.Map;
-import java.util.TreeMap;
 
 public class AdaptReplica extends DefaultRecoverable {
     private final Configurations configurations = new Configurations();
     private ServiceReplica replica;
     private int id;
 
-    private Map<SensorMessage.Type, Long> currentExecutions = new TreeMap<>();
-    private Register register;
-    private ReconfigurationDaemon daemon;
+    private Registry registry;
 
     public AdaptReplica(int id) {
         this.id = id;
-        daemon = new ReconfigurationDaemon(id);
-        register = new Register(getSensorsQuorum());
+        registry = new Registry(getSensorsQuorum(), 1000);
         replica = new ServiceReplica(id, Constants.ADAPT_HOME_FOLDER, this, this, null);
     }
 
@@ -52,8 +47,7 @@ public class AdaptReplica extends DefaultRecoverable {
             //System.out.println("setState called");
             ByteArrayInputStream bis = new ByteArrayInputStream(state);
             ObjectInput in = new ObjectInputStream(bis);
-            currentExecutions =  (Map<SensorMessage.Type, Long>) in.readObject();
-            register = (Register) in.readObject();
+            registry = (Registry) in.readObject();
             in.close();
             bis.close();
         } catch (Exception e) {
@@ -68,8 +62,7 @@ public class AdaptReplica extends DefaultRecoverable {
             //System.out.println("getState called");
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutput out = new ObjectOutputStream(bos);
-            out.writeObject(currentExecutions);
-            out.writeObject(register);
+            out.writeObject(registry);
             out.flush();
             bos.flush();
             out.close();
@@ -95,19 +88,13 @@ public class AdaptReplica extends DefaultRecoverable {
 
     private byte[] executeSingle(byte[] command, MessageContext msgCtx) {
         try {
-            SensorMessage sm = MessageSerializer.deserialize(command);
-            System.out.println("Received message:" + sm);
-            Long curr = currentExecutions.get(sm.getType());
-            if (curr == null) {
-                curr = 0L;
-                currentExecutions.put(sm.getType(), curr);
-            }
-            if (sm.getSequenceNumber() < curr) {
-                System.out.println("Sequence number of message already executed. Discarding...");
-                return new byte[]{0};
-            }
-            if (register.store(sm)) {
-                executePolicy(sm.getType(), curr);
+            Object o = MessageSerializer.deserialize(command);
+            if (o instanceof SensorMessage) {
+                SensorMessage sm = (SensorMessage) o;
+                sensorMessageReceived(sm);
+            } else if (o instanceof AdaptMessage) {
+                AdaptMessage am = (AdaptMessage) o;
+                adaptMessageReceived(am);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -115,26 +102,21 @@ public class AdaptReplica extends DefaultRecoverable {
         return new byte[] {0};
     }
 
-    private void executePolicy(SensorMessage.Type type, long currentExecution) {
-        System.out.println(String.format("[T%d] Preparing to execute policy for %s", currentExecution, type.name()));
-        ValueExtractor valueExtractor = Extractors.getCurrentExtractor();
-        if (valueExtractor != null) {
-            SensorMessage result = register.extract(type, currentExecution, valueExtractor);
-            if (result == null) {
-                System.out.println(String.format("[T%d] Don't have needed quorum for %s", currentExecution, type.name()));
-                return;
+    private void sensorMessageReceived(SensorMessage sm) {
+        if (registry.store(sm)) { //We have a new value for a TimeFrame
+            ValueChecker vc = ValueCheckers.getCurrentChecker(registry);
+            if (vc != null) {
+                vc.check();
             }
-            AdaptPolicy policy = Policies.getCurrentPolicy();
-            if (policy != null) {
-                System.out.println(String.format("[T%d] Executing policy with message %s", currentExecution, result));
-                policy.execute(id, result);
-                currentExecutions.put(type, currentExecution + 1);
-                executePolicy(type, currentExecution + 1); //try to execute next sequence (we may already have the needed messages)
-            } else {
-                System.out.println("[Error] Couldn't find policy!");
-            }
+        }
+    }
+
+    private void adaptMessageReceived(AdaptMessage am) {
+        AdaptPolicy policy = Policies.getCurrentPolicy();
+        if (policy != null) {
+            policy.execute(id, registry);
         } else {
-            System.out.println("[Error] Couldn't find value extractor!");
+            System.out.println("[Error] Couldn't find policy!");
         }
     }
 
@@ -151,13 +133,6 @@ public class AdaptReplica extends DefaultRecoverable {
 
     @Override
     public byte[] appExecuteUnordered(byte[] command, MessageContext msgCtx) {
-        try {
-            AdaptMessage msg = MessageSerializer.deserialize(command);
-            System.out.println("Received AdaptMessage");
-            daemon.storeMessage(msg);
-        } catch (ClassNotFoundException | IOException e) {
-            e.printStackTrace();
-        }
         return new byte[] {0};
     }
 }
