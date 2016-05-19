@@ -1,6 +1,6 @@
 package bftsmart.demo.adapt.messages.sensor;
 
-public class BandwidthMessage extends SensorMessage {
+public class BandwidthMessage extends SensorMessage implements Comparable<BandwidthMessage> {
     private final int bandwidth;
 
     public BandwidthMessage(int sensor, int sequenceNumber, int bandwidth) {
@@ -33,5 +33,10 @@ public class BandwidthMessage extends SensorMessage {
         BandwidthMessage that = (BandwidthMessage) o;
 
         return bandwidth == that.bandwidth;
+    }
+
+    @Override
+    public int compareTo(BandwidthMessage that) {
+        return this.bandwidth - that.bandwidth;
     }
 }

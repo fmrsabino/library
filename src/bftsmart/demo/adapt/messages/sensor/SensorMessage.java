@@ -7,7 +7,7 @@ public class SensorMessage implements Serializable {
         CPU,
         BANDWIDTH,
         THREAT,
-        BATCH_SIZE
+        WORKLOAD
     }
 
     private final int sensor;

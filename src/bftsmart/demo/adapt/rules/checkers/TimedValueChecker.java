@@ -29,9 +29,9 @@ public class TimedValueChecker implements ValueChecker {
         @Override
         public void run() {
             System.out.println("[TimedValueChecker] Started check");
-            for (Registry.TimeFrame tf : registry.recentValues(SensorMessage.Type.BANDWIDTH, 10)) {
+            /*for (Registry.TimeFrame tf : registry.recentValues(SensorMessage.Type.BANDWIDTH, 10)) {
                 System.out.println(tf.getSequenceN());
-            }
+            }*/
         }
     }
 

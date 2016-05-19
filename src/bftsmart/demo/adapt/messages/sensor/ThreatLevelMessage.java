@@ -1,9 +1,10 @@
 package bftsmart.demo.adapt.messages.sensor;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
-public class ThreatLevelMessage extends SensorMessage {
+public class ThreatLevelMessage extends SensorMessage implements Comparable <ThreatLevelMessage> {
     private List<ReplicaStatus> activeReplicas = new ArrayList<>();
     private List<ReplicaStatus> inactiveReplicas = new ArrayList<>();
     private int threatLevel;
@@ -57,6 +58,10 @@ public class ThreatLevelMessage extends SensorMessage {
         if (threatLevel != that.threatLevel) return false;
         if (!activeReplicas.equals(that.activeReplicas)) return false;
         return inactiveReplicas.equals(that.inactiveReplicas);
+    }
 
+    @Override
+    public int compareTo(ThreatLevelMessage that) {
+        return this.getThreatLevel() - that.getThreatLevel();
     }
 }
