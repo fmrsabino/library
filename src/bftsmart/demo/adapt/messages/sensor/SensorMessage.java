@@ -2,7 +2,7 @@ package bftsmart.demo.adapt.messages.sensor;
 
 import java.io.Serializable;
 
-public class SensorMessage implements Serializable {
+public abstract class SensorMessage<T extends SensorMessage> implements Serializable, Comparable<T> {
     public enum Type {
         CPU,
         BANDWIDTH,
@@ -21,16 +21,12 @@ public class SensorMessage implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
         SensorMessage that = (SensorMessage) o;
-
-        if (sensor != that.sensor) return false;
-        if (sequenceNumber != that.sequenceNumber) return false;
-        return type == that.type;
-
+        return sensor == that.sensor && sequenceNumber == that.sequenceNumber && type == that.type;
     }
 
     public int getSensor() {

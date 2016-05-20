@@ -21,7 +21,7 @@ while [ $i -lt "$nAdapt" ]; do
 	mkdir -p -- "$workspaceDir/$adaptDir$i"
 	cp -r "config" "$workspaceDir/$adaptDir$i"
 	cp -r "adapt-config" "$workspaceDir/$adaptDir$i"
-	cp -r "adapt-keys" "$workspaceDir/$adaptDir$i"
+	cp -r "sensor" "$workspaceDir/$adaptDir$i"
 	let i=i+1
 done
 echo "Created Adapt workspace"
@@ -29,7 +29,7 @@ i=0
 while [ $i -lt "$nBft" ]; do
 	mkdir -p -- "$workspaceDir/$bftDir$i"
 	cp -r "config" "$workspaceDir/$bftDir$i"
-	cp -r "adapt-keys" "$workspaceDir/$bftDir$i"
+	cp -r "adapt-config" "$workspaceDir/$bftDir$i"
 	let i=i+1
 done
 echo "Created BFT-SMaRt workspace"

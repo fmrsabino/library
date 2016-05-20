@@ -1,11 +1,7 @@
 package bftsmart.demo.adapt.messages.adapt;
 
 import bftsmart.demo.adapt.messages.sensor.ReplicaStatus;
-import bftsmart.reconfiguration.Reconfiguration;
 import bftsmart.reconfiguration.VMServices;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ChangeFMessage extends AdaptMessage {
     public static final int ADD_REPLICAS = 0;

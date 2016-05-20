@@ -1,16 +1,14 @@
 package bftsmart.demo.adapt.servers;
 
 
+import bftsmart.demo.adapt.messages.MessageWithDigest;
 import bftsmart.demo.adapt.messages.adapt.AdaptMessage;
 import bftsmart.demo.adapt.messages.sensor.SensorMessage;
 import bftsmart.demo.adapt.rules.checkers.ValueChecker;
 import bftsmart.demo.adapt.rules.checkers.ValueCheckers;
 import bftsmart.demo.adapt.rules.policies.AdaptPolicy;
 import bftsmart.demo.adapt.rules.policies.Policies;
-import bftsmart.demo.adapt.util.BftUtils;
-import bftsmart.demo.adapt.util.Constants;
-import bftsmart.demo.adapt.util.MessageSerializer;
-import bftsmart.demo.adapt.util.Registry;
+import bftsmart.demo.adapt.util.*;
 import bftsmart.tom.MessageContext;
 import bftsmart.tom.ServiceReplica;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
@@ -27,13 +25,13 @@ public class AdaptReplica extends DefaultRecoverable {
 
     private Registry registry;
 
-    public AdaptReplica(int id) {
+    public AdaptReplica(int id) throws IOException {
         this.id = id;
-        registry = new Registry(getSensorsQuorum(), 1000);
-        replica = new ServiceReplica(id, Constants.ADAPT_HOME_FOLDER, this, this, null);
+        registry = new Registry(getSensorsQuorum(), 1000, FileUtils.readPublicKeys(Constants.SENSOR_KEYS_PATH, "RSA"));
+        replica = new ServiceReplica(id, Constants.ADAPT_HOME, this, this, null);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         if (args.length < 1) {
             System.out.println("Use: java AdaptReplica <processId>");
             System.exit(-1);
@@ -89,12 +87,14 @@ public class AdaptReplica extends DefaultRecoverable {
     private byte[] executeSingle(byte[] command, MessageContext msgCtx) {
         try {
             Object o = MessageSerializer.deserialize(command);
-            if (o instanceof SensorMessage) {
-                SensorMessage sm = (SensorMessage) o;
-                sensorMessageReceived(sm);
-            } else if (o instanceof AdaptMessage) {
-                AdaptMessage am = (AdaptMessage) o;
-                adaptMessageReceived(am);
+            if (o instanceof MessageWithDigest) {
+                MessageWithDigest messageWithDigest = (MessageWithDigest) o;
+                Object o2 = messageWithDigest.getContent();
+                if (o2 instanceof SensorMessage) {
+                    sensorMessageReceived(messageWithDigest);
+                } else if (o2 instanceof AdaptMessage) {
+                    adaptMessageReceived(messageWithDigest);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -102,21 +102,24 @@ public class AdaptReplica extends DefaultRecoverable {
         return new byte[] {0};
     }
 
-    private void sensorMessageReceived(SensorMessage sm) {
-        if (registry.store(sm)) { //We have a new value for a TimeFrame
+    private void sensorMessageReceived(MessageWithDigest messageWithDigest) {
+        if (registry.store(messageWithDigest)) { //We have a new value for a TimeFrame
             ValueChecker vc = ValueCheckers.getCurrentChecker(registry);
             if (vc != null) {
                 vc.check();
             }
         }
     }
-
-    private void adaptMessageReceived(AdaptMessage am) {
-        AdaptPolicy policy = Policies.getCurrentPolicy();
-        if (policy != null) {
-            policy.execute(id, registry);
-        } else {
-            System.out.println("[Error] Couldn't find policy!");
+    int counter = 0;
+    private void adaptMessageReceived(MessageWithDigest messageWithDigest) {
+        counter++;
+        if (counter == 3) {
+            AdaptPolicy policy = Policies.getCurrentPolicy();
+            if (policy != null) {
+                policy.execute(id, registry);
+            } else {
+                System.out.println("[Error] Couldn't find policy!");
+            }
         }
     }
 

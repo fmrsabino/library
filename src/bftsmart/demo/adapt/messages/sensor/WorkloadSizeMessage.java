@@ -1,6 +1,6 @@
 package bftsmart.demo.adapt.messages.sensor;
 
-public class WorkloadSizeMessage extends SensorMessage {
+public class WorkloadSizeMessage extends SensorMessage<WorkloadSizeMessage> {
     private final Size workload;
 
     public enum Size {
@@ -19,13 +19,7 @@ public class WorkloadSizeMessage extends SensorMessage {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-
-        WorkloadSizeMessage that = (WorkloadSizeMessage) o;
-
-        return workload == that.workload;
+    public int compareTo(WorkloadSizeMessage that) {
+        return this.workload.ordinal() - that.workload.ordinal();
     }
 }

@@ -1,6 +1,5 @@
 package bftsmart.demo.adapt.rules.checkers;
 
-import bftsmart.demo.adapt.messages.sensor.SensorMessage;
 import bftsmart.demo.adapt.util.Registry;
 
 import java.util.concurrent.Executors;

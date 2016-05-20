@@ -1,10 +1,13 @@
 package bftsmart.demo.adapt.util;
 
-import bftsmart.demo.adapt.messages.sensor.ThreatLevelMessage;
+import bftsmart.demo.adapt.messages.MessageWithDigest;
 import bftsmart.demo.adapt.messages.sensor.BandwidthMessage;
 import bftsmart.demo.adapt.messages.sensor.SensorMessage;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -16,13 +19,20 @@ public class Registry implements Serializable {
     private int quorum;
     //How many TimeFrames to store per type
     private int maxSize;
+    private Map<Integer, PublicKey> publicKeys;
 
-    public Registry(int quorum, int maxSize) {
+    public Registry(int quorum, int maxSize, Map<Integer, PublicKey> publicKeys) {
         this.quorum = quorum;
         this.maxSize = maxSize;
+        this.publicKeys = publicKeys;
     }
 
-    public <T extends SensorMessage> boolean store(T message) {
+    public <T extends SensorMessage> boolean store(MessageWithDigest<T> messageWithDigest) {
+        T message = messageWithDigest.getContent();
+        if (!verifySignature(messageWithDigest)) {
+            System.out.println("[Registry] Message with invalid key! Returning");
+            return false;
+        }
         SortedMap<Integer, TimeFrame> timeFrames = map.get(message.getType());
         if (timeFrames == null) {
             System.out.println("No type found for the message. Creating type " + message.getType().name());
@@ -43,13 +53,22 @@ public class Registry implements Serializable {
         return timeFrame.store(message);
     }
 
-    public <T,U> U cast(T t) {
+    private <T extends SensorMessage> boolean verifySignature(MessageWithDigest<T> messageWithDigest) {
+        T contents = messageWithDigest.getContent();
+        if (contents != null) {
+            PublicKey pk = publicKeys.get(contents.getSensor());
+            return messageWithDigest.verify(pk);
+        }
+        return false;
+    }
+
+    private <T,U> U cast(T t) {
         return (U) t;
     }
     public <T extends SensorMessage> List<T> extractRecentValues(SensorMessage.Type type, int size, Function<TimeFrame<T>, T> extractor) {
         SortedMap<Integer, TimeFrame> timeFrames = map.get(type);
         if (timeFrames != null) {
-            Stream<TimeFrame<T>> st0 = cast(timeFrames.values().stream().limit(size));
+            Stream<TimeFrame<T>> st0 = cast(timeFrames.values().stream().limit(size).filter(tf -> tf.sensorMessages.size() >= quorum));
             Stream<T> st1 = st0.map(extractor);
             return st1.collect(Collectors.toList());
         }
@@ -59,7 +78,6 @@ public class Registry implements Serializable {
     public class TimeFrame<T extends SensorMessage> {
         private int sequenceN;
         private final Set<T> sensorMessages = new HashSet<>();
-        private boolean extracted = false;
 
         public TimeFrame(int sequenceN) {
             this.sequenceN = sequenceN;
@@ -67,9 +85,6 @@ public class Registry implements Serializable {
 
         //Returns true if timeFrame reached necessary quorum
         private boolean store(T sensorMessage) {
-            if (extracted) {
-                System.out.println("Sequence already extracted! Ignoring message.");
-            }
             sensorMessages.add(sensorMessage);
             System.out.println("Adding message to set");
             return reachedQuorum();
@@ -78,34 +93,49 @@ public class Registry implements Serializable {
         private boolean reachedQuorum() {
             return sensorMessages.size() == quorum;
         }
-
-        public int getSequenceN() {
-            return sequenceN;
-        }
     }
 
     private Registry() {
         this.quorum = 3;
         this.maxSize = 2;
-        SensorMessage sm1 = new BandwidthMessage(0, 0, 10);
-        SensorMessage sm2 = new BandwidthMessage(1, 0, 20);
-        SensorMessage sm3 = new BandwidthMessage(2, 0, 30);
-        SensorMessage sm4 = new BandwidthMessage(0, 1, 50);
-        SensorMessage sm5 = new BandwidthMessage(1, 1, 100);
-        SensorMessage sm6 = new BandwidthMessage(2, 1, 150);
 
-        List l = new ArrayList<>();
+        PrivateKey privateKey0 = SecurityUtils.getPrivateKey("sensor/keys/privatekey0", "RSA");
+        PrivateKey privateKey1 = SecurityUtils.getPrivateKey("sensor/keys/privatekey1", "RSA");
+        PrivateKey privateKey2 = SecurityUtils.getPrivateKey("sensor/keys/privatekey2", "RSA");
+        PrivateKey privateKey3 = SecurityUtils.getPrivateKey("sensor/keys/privatekey3", "RSA");
+
+        try {
+            this.publicKeys = FileUtils.readPublicKeys("sensor/keys", "RSA");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        MessageWithDigest<BandwidthMessage> bm0 = new MessageWithDigest<>(new BandwidthMessage(0, 0, 10));
+        bm0.sign(privateKey0);
+        MessageWithDigest<BandwidthMessage> bm1 = new MessageWithDigest<>(new BandwidthMessage(1, 0, 20));
+        bm1.sign(privateKey1);
+        MessageWithDigest<BandwidthMessage> bm2 = new MessageWithDigest<>(new BandwidthMessage(2, 0, 30));
+        bm2.sign(privateKey2);
+        MessageWithDigest<BandwidthMessage> bm3 = new MessageWithDigest<>(new BandwidthMessage(0, 1, 50));
+        bm3.sign(privateKey0);
+        MessageWithDigest<BandwidthMessage> bm4 = new MessageWithDigest<>(new BandwidthMessage(1, 1, 100));
+        bm4.sign(privateKey1);
+        MessageWithDigest<BandwidthMessage> bm5 = new MessageWithDigest<>(new BandwidthMessage(2, 1, 150));
+        bm5.sign(privateKey2);
+
+
+        /*List l = new ArrayList<>();
         SensorMessage tm1 = new ThreatLevelMessage(0, 0, l, l, 1);
         SensorMessage tm2 = new ThreatLevelMessage(1, 0, l, l, 2);
         SensorMessage tm3 = new ThreatLevelMessage(2, 0, l, l, 3);
         SensorMessage tm4 = new ThreatLevelMessage(0, 1, l, l, 4);
         SensorMessage tm5 = new ThreatLevelMessage(1, 1, l, l, 5);
-        SensorMessage tm6 = new ThreatLevelMessage(2, 1, l, l, 6);
+        SensorMessage tm6 = new ThreatLevelMessage(2, 1, l, l, 6);*/
 
-        SensorMessage[] msgs = new SensorMessage[] {
-                sm1, sm2, sm3, sm4, sm5, sm6, tm1,tm2, tm3, tm4, tm5, tm6
+        MessageWithDigest[] msgs = new MessageWithDigest[] {
+                bm0, bm1, bm2, bm3, bm4, bm5
         };
-        for (SensorMessage msg : msgs) {
+        for (MessageWithDigest msg : msgs) {
             store(msg);
         }
 
@@ -114,10 +144,10 @@ public class Registry implements Serializable {
             System.out.println(bm);
         }
 
-        Collection<ThreatLevelMessage> msgx1 = extractRecentValues(SensorMessage.Type.THREAT, 2, Registry::getMedian);
+        /*Collection<ThreatLevelMessage> msgx1 = extractRecentValues(SensorMessage.Type.THREAT, 2, Registry::getMedian);
         for (ThreatLevelMessage bm : msgx1) {
             System.out.println(bm);
-        }
+        }*/
 
     }
 

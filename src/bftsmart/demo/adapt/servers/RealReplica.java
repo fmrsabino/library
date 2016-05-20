@@ -91,13 +91,13 @@ public class RealReplica extends ReconfigurableReplica {
         }
     }
 
-    private RealReplica(int id) {
-        super("127.0.0.1", 11000 + (id * 10) + 5, 4);
+    private RealReplica(int id) throws IOException {
+        super("127.0.0.1", 11000 + (id * 10) + 5, 3);
         this.id = id;
         replica = new ServiceReplica(id, this, this);
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws IOException {
         if(args.length < 1) {
             System.out.println("Use: java RealReplica <processId>");
             System.exit(-1);

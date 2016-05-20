@@ -12,7 +12,7 @@ import java.security.spec.X509EncodedKeySpec;
 public class SecurityUtils {
     public static PrivateKey getPrivateKey(String filePath, String algorithm) {
         try {
-            String contents = FileUtil.readAllBytes(filePath);
+            String contents = FileUtils.readAllBytes(filePath);
             KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
             EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(Base64.decodeBase64(contents));
             return keyFactory.generatePrivate(privateKeySpec);
@@ -24,7 +24,7 @@ public class SecurityUtils {
 
     public static PublicKey getPublicKey(String filePath, String algorithm) {
         try {
-            String contents = FileUtil.readAllBytes(filePath);
+            String contents = FileUtils.readAllBytes(filePath);
             KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
             EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(Base64.decodeBase64(contents));
             return keyFactory.generatePublic(publicKeySpec);

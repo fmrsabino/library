@@ -1,8 +1,9 @@
 package bftsmart.demo.adapt.servers;
 
-import bftsmart.demo.adapt.messages.adapt.AdaptMessage;
 import bftsmart.demo.adapt.messages.MessageWithDigest;
-import bftsmart.demo.adapt.util.SecurityUtils;
+import bftsmart.demo.adapt.messages.adapt.AdaptMessage;
+import bftsmart.demo.adapt.util.Constants;
+import bftsmart.demo.adapt.util.FileUtils;
 import bftsmart.tom.server.defaultservices.DefaultRecoverable;
 
 import java.io.IOException;
@@ -10,10 +11,13 @@ import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.PublicKey;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class ReconfigurableReplica extends DefaultRecoverable {
-    public ReconfigurableReplica(String host, int port, int nAdaptReplicas) {
+    public ReconfigurableReplica(String host, int port, int nAdaptReplicas) throws IOException {
         ReconfigurationService reconfigurationService = new ReconfigurationService(host, port, nAdaptReplicas);
         reconfigurationService.start();
     }
@@ -23,18 +27,10 @@ public abstract class ReconfigurableReplica extends DefaultRecoverable {
         private final int port;
         private final MessagesContainer container;
 
-        private ReconfigurationService(String host, int port, int nAdaptReplicas) {
+        private ReconfigurationService(String host, int port, int nAdaptReplicas) throws IOException {
             this.host = host;
             this.port = port;
-            this.container = new MessagesContainer(readAdaptPublicKeys(nAdaptReplicas), 5, nAdaptReplicas);
-        }
-
-        private Map<Integer, PublicKey> readAdaptPublicKeys(int nAdaptReplicas) {
-            Map<Integer, PublicKey> result = new HashMap<>();
-            for (int i = 0; i < nAdaptReplicas; i++) {
-                result.put(i, SecurityUtils.getPublicKey(String.format("adapt-keys/publickey%d",i), "RSA"));
-            }
-            return result;
+            this.container = new MessagesContainer(FileUtils.readPublicKeys(Constants.ADAPT_KEYS_PATH, "RSA"), 5, nAdaptReplicas);
         }
 
         @Override

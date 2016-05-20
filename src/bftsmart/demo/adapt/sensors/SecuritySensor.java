@@ -2,10 +2,9 @@ package bftsmart.demo.adapt.sensors;
 
 import bftsmart.demo.adapt.messages.sensor.PingMessage;
 import bftsmart.demo.adapt.messages.sensor.ReplicaStatus;
-import bftsmart.demo.adapt.messages.sensor.ThreatLevelMessage;
 import bftsmart.demo.adapt.util.BftUtils;
 import bftsmart.demo.adapt.util.Constants;
-import bftsmart.demo.adapt.util.FileUtil;
+import bftsmart.demo.adapt.util.FileUtils;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
@@ -85,7 +84,7 @@ public class SecuritySensor {
                 System.out.println("Reached timeout.\nActiveReplicas="+activeReplicas+"\nInactiveReplicas="+inactiveReplicas);
                 //send message to adapt
                 //ThreatLevelMessage msg = new ThreatLevelMessage(0, 0, 0, activeReplicas, inactiveReplicas, readThreatLevel(Constants.THREAT_LEVEL_PATH));
-                //BftUtils.sendMessage(1001, Constants.ADAPT_HOME_FOLDER, msg, true);
+                //BftUtils.sendMessage(1001, Constants.ADAPT_HOME, msg, true);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -143,7 +142,7 @@ public class SecuritySensor {
     }
 
     private static int readThreatLevel(String filepath) {
-        List<String> lines = FileUtil.readFileLines(filepath);
+        List<String> lines = FileUtils.readFileLines(filepath);
         return lines.isEmpty() ? -1 : Integer.parseInt(lines.get(0));
     }
 }
