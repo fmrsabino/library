@@ -32,12 +32,14 @@ public class View implements Serializable {
 	private int id;
  	private int f;
  	private int[] processes;
+	private int maxBatchSize;
  	private Map<Integer,InetSocketAddress> addresses;
 
- 	public View(int id, int[] processes, int f, InetSocketAddress[] addresses){
+ 	public View(int id, int[] processes, int f, InetSocketAddress[] addresses, int maxBatchSize){
  		this.id = id;
  		this.processes = processes;
  		this.addresses = new HashMap<Integer, InetSocketAddress>();
+		this.maxBatchSize = maxBatchSize;
 
  		for(int i = 0; i < this.processes.length;i++)
  			this.addresses.put(processes[i],addresses[i]);
@@ -80,7 +82,11 @@ public class View implements Serializable {
  		return processes;
  	}
 
- 	@Override
+	public int getMaxBatchSize() {
+		return maxBatchSize;
+	}
+
+	@Override
  	public String toString(){
  		String ret = "ID:"+id+"; F:"+f+"; Processes:";
  		for(int i = 0; i < processes.length;i++){
@@ -100,7 +106,7 @@ public class View implements Serializable {
 //            return (this.addresses.equals(v.addresses) &&
             return (this.addresses.keySet().equals(v.addresses.keySet()) &&
                     Arrays.equals(this.processes, v.processes)
-                    && this.id == v.id && this.f == v.f);
+                    && this.id == v.id && this.f == v.f && this.maxBatchSize == v.getMaxBatchSize());
             
         }
         return false;
@@ -116,6 +122,7 @@ public class View implements Serializable {
             hash = hash * 31 + 0;
         }
         hash = hash * 31 + this.addresses.hashCode();
+		hash = hash * 31 + this.maxBatchSize;
         return hash;
     }
 }

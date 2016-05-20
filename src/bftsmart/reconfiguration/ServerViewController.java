@@ -15,16 +15,16 @@ limitations under the License.
 */
 package bftsmart.reconfiguration;
 
+import bftsmart.reconfiguration.views.View;
+import bftsmart.tom.core.TOMLayer;
+import bftsmart.tom.core.messages.TOMMessage;
+import bftsmart.tom.util.TOMUtil;
+
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
-
-import bftsmart.reconfiguration.views.View;
-import bftsmart.tom.core.TOMLayer;
-import bftsmart.tom.core.messages.TOMMessage;
-import bftsmart.tom.util.TOMUtil;
 
 /**
  *
@@ -35,6 +35,7 @@ public class ServerViewController extends ViewController {
     public static final int ADD_SERVER = 0;
     public static final int REMOVE_SERVER = 1;
     public static final int CHANGE_F = 2;
+    public static final int CHANGE_MAX_BATCH_SIZE = 3;
     
     private int quorumBFT; // ((n + f) / 2) replicas
     private int quorumCFT; // (n / 2) replicas
@@ -60,7 +61,7 @@ public class ServerViewController extends ViewController {
             
             System.out.println("#Creating current view from configuration file");
             reconfigureTo(new View(0, getStaticConf().getInitialView(), 
-                getStaticConf().getF(), getInitAdddresses()));
+                getStaticConf().getF(), getInitAdddresses(), getStaticConf().getMaxBatchSize()));
         }else{
             System.out.println("#Using view stored on disk");
             reconfigureTo(cv);
@@ -69,7 +70,6 @@ public class ServerViewController extends ViewController {
     }
 
     private InetSocketAddress[] getInitAdddresses() {
-
         int nextV[] = getStaticConf().getInitialView();
         InetSocketAddress[] addresses = new InetSocketAddress[nextV.length];
         for (int i = 0; i < nextV.length; i++) {
@@ -147,10 +147,9 @@ public class ServerViewController extends ViewController {
         List<Integer> jSet = new LinkedList<>();
         List<Integer> rSet = new LinkedList<>();
         int f = -1;
-        
+        int newBatchSize = -1;
         List<String> jSetInfo = new LinkedList<>();
-        
-        
+
         for (int i = 0; i < updates.size(); i++) {
             ReconfigureRequest request = (ReconfigureRequest) TOMUtil.getObject(updates.get(i).getContent());
             Iterator<Integer> it = request.getProperties().keySet().iterator();
@@ -169,20 +168,29 @@ public class ServerViewController extends ViewController {
                             String host = str.nextToken();
                             int port = Integer.valueOf(str.nextToken());
                             this.getStaticConf().addHostInfo(id, host, port);
+                        } else {
+                            return new byte[] {0}; //no need for reconfiguration
                         }
                     }
                 } else if (key == REMOVE_SERVER) {
                     if (isCurrentViewMember(Integer.parseInt(value))) {
                         rSet.add(Integer.parseInt(value));
+                    } else {
+                        return new byte[] {0}; //no need for reconfiguration
                     }
                 } else if (key == CHANGE_F) {
                     f = Integer.parseInt(value);
+                } else if (key == CHANGE_MAX_BATCH_SIZE) {
+                    int currentBatchSize = getStaticConf().getMaxBatchSize();
+                    newBatchSize = Integer.parseInt(value);
+                    if (currentBatchSize == newBatchSize) {
+                        return new byte[]{0}; //no need for reconfiguration
+                    }
                 }
             }
-
         }
         //ret = reconfigure(updates.get(i).getContent());
-        return reconfigure(jSetInfo, jSet, rSet, f, cid);
+        return reconfigure(jSetInfo, jSet, rSet, f, cid, newBatchSize);
     }
 
     private boolean contains(int id, List<Integer> list) {
@@ -194,7 +202,7 @@ public class ServerViewController extends ViewController {
         return false;
     }
 
-    private byte[] reconfigure(List<String> jSetInfo, List<Integer> jSet, List<Integer> rSet, int f, int cid) {
+    private byte[] reconfigure(List<String> jSetInfo, List<Integer> jSet, List<Integer> rSet, int f, int cid, int newBatchSize) {
         //ReconfigureRequest request = (ReconfigureRequest) TOMUtil.getObject(req);
         // Hashtable<Integer, String> props = request.getProperties();
         // int f = Integer.valueOf(props.get(CHANGE_F));
@@ -227,7 +235,11 @@ public class ServerViewController extends ViewController {
         for(int i = 0 ;i < nextV.length ;i++)
         	addresses[i] = getStaticConf().getRemoteAddress(nextV[i]);
 
-        View newV = new View(currentView.getId() + 1, nextV, f,addresses);
+        if (newBatchSize < 0) {
+            newBatchSize = getStaticConf().getMaxBatchSize();
+        }
+
+        View newV = new View(currentView.getId() + 1, nextV, f,addresses, newBatchSize);
 
         System.out.println("new view: " + newV);
         System.out.println("installed on CID: " + cid);
@@ -303,7 +315,7 @@ public class ServerViewController extends ViewController {
                     otherProcesses[c++] = currentView.getProcesses()[i];
                 }
             }
-
+            getStaticConf().setMaxBatchSize(newView.getMaxBatchSize());
             this.quorumBFT = (int) Math.ceil((this.currentView.getN() + this.currentView.getF()) / 2);
             this.quorumCFT = (int) Math.ceil(this.currentView.getN() / 2);
         } else if (this.currentView != null && this.currentView.isMember(getStaticConf().getProcessId())) {

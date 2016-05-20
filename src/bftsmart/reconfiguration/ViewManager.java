@@ -104,20 +104,25 @@ public class ViewManager {
         rec.setF(f);
     }
 
+    public void changeMaxBatchSize(int maxBatchSize) {
+        rec.setMaxBatchSize(maxBatchSize);
+    }
+
     public void executeUpdates() {
         connect();
         ReconfigureReply r = rec.execute();
+        if (r == null) {
+            return;
+        }
         View v = r.getView();
         System.out.println("New view f: " + v.getF());
 
         VMMessage msg = new VMMessage(id, r);
 
-        if (addIds.size() > 0) { 
+        if (addIds.size() > 0) {
             sendResponse(addIds.toArray(new Integer[1]), msg);
             addIds.clear();
         }
-
-
     }
 
     private ServerConnection getConnection(int remoteId) {

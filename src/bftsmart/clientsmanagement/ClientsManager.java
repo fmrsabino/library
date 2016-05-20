@@ -124,7 +124,7 @@ public class ClientsManager {
                 }
             }
             
-            if(allReq.size() == controller.getStaticConf().getMaxBatchSize() ||
+            if(allReq.size() >= controller.getStaticConf().getMaxBatchSize() ||
                     noMoreMessages == clientsEntrySet.size()) {
                 
                 break;

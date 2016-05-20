@@ -344,6 +344,10 @@ public class TOMConfiguration extends Configuration {
         return (this.getTTPId() == this.getProcessId());
     }
 
+    public String getConfigHome() {
+        return configHome;
+    }
+
     public final int[] getInitialView() {
         return this.initialView;
     }
@@ -382,6 +386,11 @@ public class TOMConfiguration extends Configuration {
     
     public int getMaxBatchSize() {
         return maxBatchSize;
+    }
+
+    public void setMaxBatchSize(int maxBatchSize) {
+        System.out.println(String.format("[RECONFIG] Changing batch size from %d to %d", this.maxBatchSize, maxBatchSize));
+        this.maxBatchSize = maxBatchSize;
     }
 
     public boolean isShutdownHookEnabled() {

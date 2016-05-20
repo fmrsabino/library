@@ -53,7 +53,10 @@ public class Reconfiguration {
     public void setF(int f){
       this.setReconfiguration(ServerViewController.CHANGE_F,String.valueOf(f));  
     }
-    
+
+    public void setMaxBatchSize(int maxBatchSize) {
+        setReconfiguration(ServerViewController.CHANGE_MAX_BATCH_SIZE, String.valueOf(maxBatchSize));
+    }
     
     public void setReconfiguration(int prop, String value){
         if(request == null){
